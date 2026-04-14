@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/tesouraria.iml" filepath="$PROJECT_DIR$/.idea/tesouraria.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tesouraria/tesouraria.iml" filepath="$PROJECT_DIR$/tesouraria/tesouraria.iml" />
     </modules>
   </component>
 </project>
