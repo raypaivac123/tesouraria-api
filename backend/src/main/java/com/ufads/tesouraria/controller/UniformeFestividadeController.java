@@ -7,6 +7,7 @@ import com.ufads.tesouraria.entity.UniformeFestividade;
 import com.ufads.tesouraria.mapper.UniformeFestividadeMapper;
 import com.ufads.tesouraria.service.UniformeFestividadeService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class UniformeFestividadeController {
 
     @Operation(summary = "Criar registro de uniforme festividade")
     @PostMapping
-    public UniformeFestividadeResponseDTO criar(@RequestBody UniformeFestividadeRequestDTO dto) {
+    public UniformeFestividadeResponseDTO criar(@RequestBody @Valid UniformeFestividadeRequestDTO dto) {
         UniformeFestividade entity = service.criar(dto);
         return UniformeFestividadeMapper.toResponseDTO(entity);
     }
@@ -51,7 +52,7 @@ public class UniformeFestividadeController {
     @PutMapping("/{id}")
     public UniformeFestividadeResponseDTO atualizar(
             @PathVariable Long id,
-            @RequestBody UniformeFestividadeRequestDTO dto
+            @RequestBody @Valid UniformeFestividadeRequestDTO dto
     ) {
         UniformeFestividade entity = service.atualizar(id, dto);
         return UniformeFestividadeMapper.toResponseDTO(entity);

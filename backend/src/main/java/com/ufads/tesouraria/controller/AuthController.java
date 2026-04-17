@@ -6,8 +6,10 @@ import com.ufads.tesouraria.entity.Usuario;
 import com.ufads.tesouraria.mapper.UsuarioMapper;
 import com.ufads.tesouraria.security.JwtService;
 import com.ufads.tesouraria.service.UsuarioService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +24,7 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO request) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO request) {
 
         Usuario usuario = usuarioService.buscarPorUsername(request.getUsername());
 
@@ -34,6 +36,16 @@ public class AuthController {
             throw new RuntimeException("Usuário ou senha inválidos");
         }
 
+        String token = jwtService.generateToken(usuario.getUsername());
+
+        return ResponseEntity.ok(
+                UsuarioMapper.toLoginResponseDTO(usuario, token)
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponseDTO> refresh(Authentication authentication) {
+        Usuario usuario = usuarioService.buscarPorUsername(authentication.getName());
         String token = jwtService.generateToken(usuario.getUsername());
 
         return ResponseEntity.ok(

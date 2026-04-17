@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 @Component
 @RequiredArgsConstructor
 public class CaixaEventListener {
@@ -17,14 +20,14 @@ public class CaixaEventListener {
     public void aoReceberPagamentoUniforme(PagamentoUniformeRealizadoEvent event) {
 
         MovimentoCaixa movimento = MovimentoCaixa.builder()
-                .data(event.getData())
+                .data(event.getData() == null ? LocalDate.now() : event.getData())
                 .tipo(TipoMovimento.ENTRADA)
                 .descricao(event.getDescricao())
                 .categoria(event.getCategoria())
                 .formaPagamento(event.getFormaPagamento())
                 .valor(event.getValor())
-                .valorPix(event.getValorPix())
-                .valorDinheiro(event.getValorDinheiro())
+                .valorPix(event.getValorPix() == null ? BigDecimal.ZERO : event.getValorPix())
+                .valorDinheiro(event.getValorDinheiro() == null ? BigDecimal.ZERO : event.getValorDinheiro())
                 .observacao(event.getObservacao())
                 .ativo(true)
                 .build();

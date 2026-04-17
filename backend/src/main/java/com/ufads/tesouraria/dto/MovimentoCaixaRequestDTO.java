@@ -2,8 +2,10 @@ package com.ufads.tesouraria.dto;
 
 import com.ufads.tesouraria.enums.FormaPagamento;
 import com.ufads.tesouraria.enums.TipoMovimento;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -32,10 +34,13 @@ public class MovimentoCaixaRequestDTO {
     private FormaPagamento formaPagamento;
 
     @NotNull
+    @Positive
     private BigDecimal valor;
 
+    @DecimalMin(value = "0.00")
     private BigDecimal valorPix;
 
+    @DecimalMin(value = "0.00")
     private BigDecimal valorDinheiro;
 
     private String observacao;

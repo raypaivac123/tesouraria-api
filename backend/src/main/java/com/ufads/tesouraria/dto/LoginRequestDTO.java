@@ -1,5 +1,6 @@
 package com.ufads.tesouraria.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
@@ -9,7 +10,10 @@ import lombok.*;
 @Builder
 public class LoginRequestDTO {
 
+    @NotBlank
     private String username;
+
+    @NotBlank
     private String password;
 
 }

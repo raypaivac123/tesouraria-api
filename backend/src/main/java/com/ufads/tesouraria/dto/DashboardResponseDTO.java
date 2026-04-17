@@ -20,4 +20,10 @@ public class DashboardResponseDTO {
 
     private BigDecimal totalUniformeFestividade;
     private BigDecimal totalUniformePandeiro;
+
+    private BigDecimal totalPendenteUniformeFestividade;
+    private BigDecimal totalPendenteUniformePandeiro;
+    private BigDecimal totalArrecadadoUniformes;
+    private BigDecimal totalPendenteUniformes;
+    private Long totalRegistrosUniformes;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
@@ -77,7 +77,7 @@ export default function Vendas() {
     observacao: ""
   });
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       const [vendasResponse, lotesResponse] = await Promise.all([
         api.get("/vendas"),
@@ -93,11 +93,11 @@ export default function Vendas() {
     } catch (error) {
       console.error("Erro ao carregar vendas", error);
     }
-  }
+  }, [loteSelecionado]);
 
   useEffect(() => {
     carregar();
-  }, []);
+  }, [carregar]);
 
   const loteAtual = lotes.find((lote) => String(lote.id) === loteSelecionado);
 

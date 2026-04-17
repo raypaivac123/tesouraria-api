@@ -50,7 +50,7 @@ export default function NovaMulher() {
 
       alert("Mulher salva com sucesso");
       navigate("/mulheres");
-    } catch (error) {
+    } catch {
       alert("Erro ao salvar mulher");
     }
   }

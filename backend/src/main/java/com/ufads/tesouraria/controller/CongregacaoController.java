@@ -4,6 +4,7 @@ import com.ufads.tesouraria.dto.CongregacaoRequestDTO;
 import com.ufads.tesouraria.dto.CongregacaoResponseDTO;
 import com.ufads.tesouraria.service.CongregacaoService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class CongregacaoController {
 
     @Operation(summary = "Criar congregação")
     @PostMapping
-    public CongregacaoResponseDTO criar(@RequestBody CongregacaoRequestDTO dto){
+    public CongregacaoResponseDTO criar(@RequestBody @Valid CongregacaoRequestDTO dto){
 
         return service.criar(dto);
 
@@ -48,7 +49,7 @@ public class CongregacaoController {
     @PutMapping("/{id}")
     public CongregacaoResponseDTO atualizar(
             @PathVariable Long id,
-            @RequestBody CongregacaoRequestDTO dto
+            @RequestBody @Valid CongregacaoRequestDTO dto
     ){
 
         return service.atualizar(id, dto);

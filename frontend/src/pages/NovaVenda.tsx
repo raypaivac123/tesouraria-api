@@ -54,7 +54,7 @@ export default function NovaVenda() {
 
       alert("Venda salva com sucesso");
       navigate("/vendas");
-    } catch (error) {
+    } catch {
       alert("Erro ao salvar venda");
     }
   }

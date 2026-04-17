@@ -116,6 +116,10 @@ public class UniformePandeiroService {
         BigDecimal totalPago = valorPix.add(valorDinheiro);
         BigDecimal saldoPendente = dto.getValorUniforme().subtract(totalPago);
 
+        if (saldoPendente.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Valor pago maior que o valor do uniforme");
+        }
+
         StatusPagamento status = definirStatus(totalPago, dto.getValorUniforme());
 
         entity.setNomeMulher(dto.getNomeMulher());

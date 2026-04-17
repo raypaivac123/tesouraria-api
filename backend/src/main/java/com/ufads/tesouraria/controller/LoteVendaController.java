@@ -5,6 +5,7 @@ import com.ufads.tesouraria.dto.LoteVendaResponseDTO;
 import com.ufads.tesouraria.mapper.LoteVendaMapper;
 import com.ufads.tesouraria.service.LoteVendaService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class LoteVendaController {
 
     @Operation(summary = "Criar lote de venda")
     @PostMapping
-    public LoteVendaResponseDTO criar(@RequestBody LoteVendaRequestDTO dto) {
+    public LoteVendaResponseDTO criar(@RequestBody @Valid LoteVendaRequestDTO dto) {
         return LoteVendaMapper.toResponseDTO(service.criar(dto));
     }
 

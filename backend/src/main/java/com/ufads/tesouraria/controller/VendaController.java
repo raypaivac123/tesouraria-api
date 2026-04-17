@@ -5,6 +5,7 @@ import com.ufads.tesouraria.dto.VendaResponseDTO;
 import com.ufads.tesouraria.mapper.VendaMapper;
 import com.ufads.tesouraria.service.VendaService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class VendaController {
 
     @Operation(summary = "Criar venda")
     @PostMapping
-    public VendaResponseDTO criar(@RequestBody VendaRequestDTO dto) {
+    public VendaResponseDTO criar(@RequestBody @Valid VendaRequestDTO dto) {
         return VendaMapper.toResponseDTO(service.criar(dto));
     }
 
@@ -34,7 +35,7 @@ public class VendaController {
 
     @Operation(summary = "Atualizar venda")
     @PutMapping("/{id}")
-    public VendaResponseDTO atualizar(@PathVariable Long id, @RequestBody VendaRequestDTO dto) {
+    public VendaResponseDTO atualizar(@PathVariable Long id, @RequestBody @Valid VendaRequestDTO dto) {
         return VendaMapper.toResponseDTO(service.atualizar(id, dto));
     }
 

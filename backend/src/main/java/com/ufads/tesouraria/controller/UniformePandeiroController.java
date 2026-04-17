@@ -6,6 +6,7 @@ import com.ufads.tesouraria.dto.UniformePandeiroResponseDTO;
 import com.ufads.tesouraria.mapper.UniformePandeiroMapper;
 import com.ufads.tesouraria.service.UniformePandeiroService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +21,7 @@ public class UniformePandeiroController {
 
     @Operation(summary = "Criar uniforme pandeiro")
     @PostMapping
-    public UniformePandeiroResponseDTO criar(@RequestBody UniformePandeiroRequestDTO dto) {
+    public UniformePandeiroResponseDTO criar(@RequestBody @Valid UniformePandeiroRequestDTO dto) {
 
         return UniformePandeiroMapper.toResponseDTO(service.criar(dto));
     }
@@ -52,7 +53,7 @@ public class UniformePandeiroController {
     @PutMapping("/{id}")
     public UniformePandeiroResponseDTO atualizar(
             @PathVariable Long id,
-            @RequestBody UniformePandeiroRequestDTO dto
+            @RequestBody @Valid UniformePandeiroRequestDTO dto
     ) {
 
         return UniformePandeiroMapper.toResponseDTO(service.atualizar(id, dto));
