@@ -1,238 +1,205 @@
 # 💰 Tesouraria API
 
-Sistema backend desenvolvido para auxiliar no controle financeiro de eventos e atividades da igreja.
+API REST desenvolvida com **Java + Spring Boot** para controle financeiro de eventos e atividades da igreja.
 
-O projeto surgiu a partir de uma necessidade real de organizar o registro de vendas, pagamentos e acompanhamento financeiro de itens como uniformes de festividades e grupos (ex: pandeiro), evitando controles manuais e facilitando a visualização de dados importantes para tomada de decisão.
+O sistema permite registrar vendas de uniformes, controlar pagamentos parciais e acompanhar saldos pendentes de forma organizada, evitando controles manuais em papel ou planilhas dispersas.
 
-A proposta é centralizar informações financeiras, manter histórico de pagamentos e permitir acompanhamento do saldo de forma simples, segura e organizada.
-
----
-
-# 🎯 Problema identificado
-
-Durante a organização de eventos e atividades da igreja, foi observado que:
-
-- o controle financeiro era feito manualmente
-- havia dificuldade em acompanhar quem já pagou e quem ainda possui saldo pendente
-- não existia um painel consolidado com totais de entradas e saídas
-- informações ficavam espalhadas em anotações ou planilhas
-- era difícil manter histórico confiável de pagamentos parciais
-
-Diante disso, busquei desenvolver uma solução tecnológica para resolver esse problema de forma estruturada e escalável.
+O objetivo é centralizar as informações financeiras, manter histórico confiável de pagamentos e fornecer dados consolidados para melhor tomada de decisão.
 
 ---
 
-# 💡 Solução proposta
+# 🎯 Problema
 
-Uma API REST desenvolvida com Spring Boot para:
+Durante a organização de eventos da igreja, foi identificado que:
 
-- registrar vendas de uniformes
-- controlar pagamentos parciais (Pix, dinheiro, etc)
-- calcular automaticamente saldo pendente
-- organizar informações por congregação
-- fornecer um dashboard financeiro com totais consolidados
-- preparar a aplicação para autenticação segura com JWT
-- manter uma arquitetura organizada seguindo boas práticas de backend
+* o controle financeiro era feito manualmente
+* havia dificuldade em acompanhar quem já pagou
+* não existia visão consolidada dos valores arrecadados
+* pagamentos parciais não eram controlados corretamente
+* informações ficavam espalhadas em anotações e planilhas
+* era difícil manter histórico confiável
+
+Isso gerava retrabalho, erros de cálculo e falta de organização financeira.
 
 ---
 
-# 🧱 Arquitetura do projeto
+# 💡 Solução
 
-O projeto foi estruturado seguindo o padrão em camadas:
+Foi desenvolvida uma API REST com Spring Boot para:
 
-controller → recebe requisições HTTP  
-service → regras de negócio  
-repository → acesso ao banco de dados  
-entity → representação das tabelas  
-dto → objetos de transferência de dados  
-mapper → conversão entre entity e dto  
+* registrar vendas de uniformes
+* controlar pagamentos parciais (Pix, dinheiro, etc)
+* calcular automaticamente saldo pendente
+* organizar informações por congregação
+* fornecer dados para dashboard financeiro
+* preparar autenticação segura com JWT
+* manter arquitetura organizada e escalável
+
+---
+
+# 🧱 Arquitetura
+
+O projeto segue arquitetura em camadas:
+
+controller → recebe requisições HTTP
+service → regras de negócio
+repository → acesso ao banco de dados
+entity → representação das tabelas
+dto → objetos de transferência de dados
+mapper → conversão entre entity e dto
 
 Estrutura:
 
 src/main/java/com/ufads/tesouraria
 
-- controller
-- service
-- repository
-- entity
-- dto
-- mapper
-- security
-- config
+* controller
+* service
+* repository
+* entity
+* dto
+* mapper
+* security
+* config
 
 ---
 
-# 🚀 Tecnologias utilizadas
+# 🚀 Tecnologias
 
-- Java 17
-- Spring Boot
-- Spring Web
-- Spring Data JPA
-- Hibernate
-- MySQL ou H2
-- Lombok
-- Swagger / OpenAPI
-- Maven
-- Git
-- GitHub
+* Java 17
+* Spring Boot
+* Spring Web
+* Spring Data JPA
+* Hibernate
+* Maven
+* Lombok
+* Swagger / OpenAPI
+* H2 ou MySQL
+* Docker
+* Git
+* GitHub
+* Render
 
 ---
 
 # 📊 Funcionalidades implementadas
 
-✔ Cadastro de congregações  
-✔ Cadastro de participantes  
-✔ Registro de vendas de uniformes  
-✔ Controle de pagamento parcial  
-✔ Cálculo automático de saldo pendente  
-✔ Dashboard financeiro  
-✔ Organização por DTO e Mapper  
-✔ Estrutura preparada para autenticação JWT  
-✔ Documentação automática da API com Swagger  
+✔ Cadastro de congregações
+✔ Cadastro de participantes
+✔ Registro de vendas de uniformes
+✔ Controle de pagamento parcial
+✔ Cálculo automático de saldo pendente
+✔ Organização por DTO
+✔ Mapper para conversão de dados
+✔ Arquitetura em camadas
+✔ Swagger configurado
+✔ Estrutura inicial de autenticação JWT
+✔ Dockerfile configurado
+✔ Deploy configurado no Render
 
 ---
 
 # 📈 Exemplo de dados controlados
 
-- valor total do uniforme
-- valor pago via Pix
-- valor pago em dinheiro
-- saldo pendente
-- status do pagamento
-- data do pagamento
-- observações
-- vínculo com congregação
+* valor total do uniforme
+* valor pago via Pix
+* valor pago em dinheiro
+* saldo pendente
+* status do pagamento
+* data do pagamento
+* observações
+* vínculo com congregação
 
 ---
 
-# 🗺 Roadmap do projeto
+# 🗺 Roadmap
 
-## ✅ Versão atual (MVP)
+## 🔐 Segurança
 
-- [x] Cadastro de congregações
-- [x] Cadastro de participantes
-- [x] Registro de vendas de uniformes
-- [x] Controle de pagamento parcial
-- [x] Cálculo automático de saldo pendente
-- [x] Dashboard financeiro
-- [x] Organização em camadas (controller, service, repository)
-- [x] Uso de DTOs e Mappers
-- [x] Documentação da API com Swagger
-- [x] Estrutura preparada para autenticação
+* [x] Estrutura inicial de autenticação
+* [ ] Login com JWT funcional
+* [ ] Cadastro de usuário
+* [ ] Criptografia de senha
+* [ ] Controle de acesso por perfil
+* [ ] Proteção de rotas
 
----
+## 📊 Dashboard
 
-## 🔐 Autenticação e segurança
+* [x] Estrutura de dados para dashboard
+* [ ] Total por período
+* [ ] Filtro por congregação
+* [ ] Histórico financeiro
+* [ ] Indicadores de arrecadação
 
-- [ ] Implementar login com JWT
-- [ ] Criar entidade de usuário
-- [ ] Criptografia de senha
-- [ ] Controle de acesso por perfil
-- [ ] Proteger rotas da API
-- [ ] Token de autenticação via Bearer Token
+## 💳 Pagamentos
 
----
-
-## 📊 Melhorias no dashboard
-
-- [ ] Total de vendas por período
-- [ ] Filtro por congregação
-- [ ] Relatório de pagamentos pendentes
-- [ ] Histórico financeiro
-- [ ] Indicadores de arrecadação
-- [ ] Evolução dos pagamentos ao longo do tempo
-
----
-
-## 💳 Gestão de pagamentos
-
-- [ ] Controle de parcelas
-- [ ] Registro de múltiplos pagamentos
-- [ ] Histórico detalhado de pagamentos
-- [ ] Status automático:
-  - PENDENTE
-  - PARCIAL
-  - PAGO
-- [ ] Regras automáticas de cálculo de saldo
-
----
+* [x] Controle de pagamento parcial
+* [x] Cálculo automático de saldo
+* [ ] Controle de parcelas
+* [ ] Histórico detalhado
+* [ ] Status automático (PENDENTE, PARCIAL, PAGO)
 
 ## 📑 Relatórios
 
-- [ ] Relatório de vendas
-- [ ] Relatório por congregação
-- [ ] Relatório por período
-- [ ] Exportação em PDF
-- [ ] Exportação em Excel
+* [ ] Relatório por período
+* [ ] Exportação PDF
+* [ ] Exportação Excel
 
----
+## 🌐 Frontend
 
-## 🌐 Integração com frontend
+* [x] Estrutura inicial em React
+* [x] Tela de login
+* [x] Integração inicial com API
+* [ ] Dashboard visual completo
+* [ ] Tela de cadastro completa
 
-- [ ] Criar interface web
-- [ ] Dashboard visual
-- [ ] Tela de cadastro
-- [ ] Tela de controle financeiro
-- [ ] Tela de login
-- [ ] Integração com API
+## 🧪 Qualidade
 
----
-
-## 🧪 Qualidade e boas práticas
-
-- [ ] Testes unitários
-- [ ] Tratamento global de exceções
-- [ ] Validações de dados
-- [ ] Padronização de respostas da API
-- [ ] Logs da aplicação
-- [ ] Organização de pacotes
-
----
+* [ ] Testes unitários
+* [ ] Tratamento global de exceções
+* [ ] Validações de dados
+* [ ] Padronização de respostas
+* [ ] Logs da aplicação
 
 ## ☁ Deploy
 
-- [ ] Deploy em nuvem
-- [ ] Configuração de variáveis de ambiente
-- [ ] Banco em produção
-- [ ] URL pública da API
-- [ ] Documentação online
+* [x] Projeto preparado para deploy
+* [x] Dockerfile criado
+* [x] Deploy iniciado no Render
+* [ ] Banco em produção
+* [ ] Variáveis de ambiente
+* [ ] URL pública definitiva da API
 
 ---
 
-## 📌 Futuras evoluções
-
-- [ ] Controle de múltiplos eventos
-- [ ] Cadastro de produtos diversos
-- [ ] Controle de caixa completo
-- [ ] Gestão financeira geral da igreja
-- [ ] Controle de permissões por perfil
-- [ ] Histórico de alterações
-
----
-
-# ▶ Como executar o projeto
+# ▶ Como executar localmente
 
 1. Clonar o repositório
 
 git clone https://github.com/raypaivac123/tesouraria-api.git
 
-2. Abrir o projeto no IntelliJ ou VS Code
+2. Abrir no IntelliJ ou VS Code
 
-3. Configurar o banco de dados no arquivo:
+3. Configurar banco no:
 
 application.properties
 
-4. Executar a aplicação:
+4. Executar:
 
 TesourariaApplication.java
 
-5. Acessar a documentação Swagger:
+5. Acessar Swagger:
 
 http://localhost:8080/swagger-ui.html
 
-ou
+---
 
-http://localhost:8080/swagger-ui/index.html
+# 🐳 Executar com Docker
+
+Dentro da pasta backend:
+
+docker build -t tesouraria-api .
+
+docker run -p 8080:8080 tesouraria-api
 
 ---
 
@@ -240,9 +207,15 @@ http://localhost:8080/swagger-ui/index.html
 
 Rayssa Paiva Carvalho
 
-Graduada em Ciência da Computação  
-Instrutora de Tecnologia no SENAC  
-Foco em desenvolvimento backend com Java e Spring Boot  
+Graduada em Ciência da Computação
+Instrutora de Tecnologia no SENAC
+
+Foco em:
+
+Java
+Spring Boot
+APIs REST
+Banco de dados
 
 GitHub:
 https://github.com/raypaivac123
@@ -254,4 +227,7 @@ https://linkedin.com/in/rayssa-paiva-0565301b9/
 
 # 📌 Observação
 
-Este projeto foi desenvolvido com fins de aprendizado e também para resolver uma necessidade real de organização financeira, aplicando conceitos de arquitetura backend, boas práticas de programação e versionamento de código.
+Projeto desenvolvido para resolver uma necessidade real de organização financeira da igreja, aplicando boas práticas de backend, arquitetura em camadas e preparação para autenticação segura.
+
+```
+```
