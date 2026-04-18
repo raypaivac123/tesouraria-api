@@ -90,7 +90,7 @@ backend/src/main/java/com/ufads/tesouraria
 - Maven
 - Lombok
 - Swagger / OpenAPI
-- MySQL
+- PostgreSQL
 
 ### Frontend
 
@@ -256,7 +256,7 @@ A API permite controlar informações como:
 
 - Java 17
 - Maven ou Maven Wrapper
-- MySQL
+- PostgreSQL ou banco Neon configurado
 - Git
 
 ### Passos
@@ -313,9 +313,9 @@ O backend aceita as principais configurações de execução por variáveis de a
 | Variável | Descrição | Valor padrão |
 | --- | --- | --- |
 | `PORT` | Porta da aplicação | `8080` |
-| `DATABASE_URL` | URL de conexão com o MySQL | `jdbc:mysql://localhost:3306/tesouraria` |
-| `DATABASE_USERNAME` | Usuário do banco de dados | `root` |
-| `DATABASE_PASSWORD` | Senha do banco de dados | vazio |
+| `DB_URL` | URL de conexão com o PostgreSQL/Neon | obrigatório |
+| `DB_USERNAME` | Usuário do banco de dados | obrigatório |
+| `DB_PASSWORD` | Senha do banco de dados | obrigatório |
 | `JWT_SECRET` | Chave secreta para geração de tokens JWT | chave padrão de desenvolvimento |
 | `JWT_EXPIRATION` | Tempo de expiração do token em milissegundos | `86400000` |
 
