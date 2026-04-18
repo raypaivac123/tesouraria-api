@@ -2,6 +2,8 @@ package com.ufads.tesouraria.controller;
 
 import com.ufads.tesouraria.dto.LoginRequestDTO;
 import com.ufads.tesouraria.dto.LoginResponseDTO;
+import com.ufads.tesouraria.dto.RegisterRequestDTO;
+import com.ufads.tesouraria.dto.UsuarioResponseDTO;
 import com.ufads.tesouraria.entity.Usuario;
 import com.ufads.tesouraria.mapper.UsuarioMapper;
 import com.ufads.tesouraria.security.JwtService;
@@ -22,6 +24,17 @@ public class AuthController {
     private final UsuarioService usuarioService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+
+    @PostMapping("/register")
+    public ResponseEntity<UsuarioResponseDTO> register(@RequestBody @Valid RegisterRequestDTO request) {
+        Usuario usuario = usuarioService.registrar(
+                request.getNome(),
+                request.getUsername(),
+                request.getPassword()
+        );
+
+        return ResponseEntity.ok(UsuarioMapper.toResponseDTO(usuario));
+    }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO request) {

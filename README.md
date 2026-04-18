@@ -162,7 +162,7 @@ A API permite controlar informações como:
 
 | Recurso | Endpoint |
 | --- | --- |
-| Autenticação | `/auth/login` e `/auth/refresh` |
+| Autenticação | `/auth/register`, `/auth/login` e `/auth/refresh` |
 | Congregações | `/congregacoes` |
 | Participantes | `/mulheres` |
 | Vendas | `/vendas` |
@@ -190,6 +190,7 @@ A API permite controlar informações como:
 - [x] Criptografia de senha
 - [x] Proteção de rotas
 - [x] Cadastro administrativo de usuários
+- [x] Cadastro público inicial via `/auth/register`
 - [x] Controle de acesso por perfil
 - [x] Refresh de token JWT
 

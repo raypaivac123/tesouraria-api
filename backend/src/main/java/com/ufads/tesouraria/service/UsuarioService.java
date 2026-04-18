@@ -2,6 +2,7 @@ package com.ufads.tesouraria.service;
 
 import com.ufads.tesouraria.dto.UsuarioRequestDTO;
 import com.ufads.tesouraria.entity.Usuario;
+import com.ufads.tesouraria.enums.RoleUsuario;
 import com.ufads.tesouraria.exception.ResourceNotFoundException;
 import com.ufads.tesouraria.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,22 @@ public class UsuarioService {
                 .username(dto.getUsername())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(dto.getRole())
+                .ativo(true)
+                .build();
+
+        return usuarioRepository.save(usuario);
+    }
+
+    public Usuario registrar(String nome, String username, String password) {
+        if (usuarioRepository.existsByUsername(username)) {
+            throw new RuntimeException("Username ja cadastrado");
+        }
+
+        Usuario usuario = Usuario.builder()
+                .nome(nome)
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .role(RoleUsuario.OPERADOR)
                 .ativo(true)
                 .build();
 
