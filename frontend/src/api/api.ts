@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:8080"
+  baseURL: import.meta.env.VITE_API_URL ?? "https://tesouraria-h4zl.onrender.com"
 });
 
 api.interceptors.request.use((config) => {
