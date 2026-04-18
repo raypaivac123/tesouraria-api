@@ -29,9 +29,12 @@ Foi desenvolvida uma API REST com Spring Boot para:
 
 - registrar vendas de uniformes;
 - controlar pagamentos parciais, como Pix e dinheiro;
+- controlar parcelas e acompanhar a parcela atual;
 - calcular automaticamente o saldo pendente;
 - organizar informações por congregação;
 - disponibilizar dados para dashboard financeiro;
+- exportar relatórios em CSV, PDF e Excel;
+- manter histórico de alterações e baixas automáticas;
 - preparar autenticação segura com JWT;
 - manter uma arquitetura organizada, escalável e de fácil manutenção.
 
@@ -50,6 +53,7 @@ O projeto segue uma arquitetura em camadas:
 | `dto` | Define os objetos de entrada e saída da API |
 | `mapper` | Converte dados entre entidades e DTOs |
 | `security` | Concentra autenticação, autorização e JWT |
+| `event` | Automatiza baixas no caixa a partir de pagamentos |
 | `config` | Armazena configurações gerais do projeto |
 
 Estrutura principal do backend:
@@ -111,8 +115,15 @@ backend/src/main/java/com/ufads/tesouraria
 - [x] Cadastro de participantes
 - [x] Registro de vendas de uniformes
 - [x] Controle de pagamentos parciais
+- [x] Controle de parcelas
 - [x] Cálculo automático de saldo pendente
 - [x] Status de pagamento
+- [x] Baixa automática no caixa
+- [x] Histórico detalhado de alterações
+- [x] Exportação de relatórios em CSV
+- [x] Exportação de relatórios em PDF
+- [x] Exportação de relatórios em Excel
+- [x] Logs estruturados em JSON
 - [x] Organização por DTOs
 - [x] Mappers para conversão de dados
 - [x] Arquitetura em camadas
@@ -136,10 +147,13 @@ A API permite controlar informações como:
 - valor pago em dinheiro;
 - saldo pendente;
 - status do pagamento;
+- quantidade de parcelas;
+- parcela atual;
 - data do pagamento;
 - observações;
 - vínculo com congregação;
 - movimentações de caixa;
+- histórico de alterações;
 - resumo financeiro para dashboard.
 
 ---
@@ -159,6 +173,9 @@ A API permite controlar informações como:
 | Dashboard | `/dashboard` |
 | Relatórios | `/relatorios/financeiro` |
 | Exportação CSV | `/relatorios/financeiro/csv` |
+| Exportação PDF | `/relatorios/financeiro/pdf` |
+| Exportação Excel | `/relatorios/financeiro/excel` |
+| Histórico de alterações | `/historico` |
 | Usuários | `/usuarios` |
 | Swagger | `/swagger-ui.html` |
 
@@ -183,34 +200,35 @@ A API permite controlar informações como:
 - [x] Total por período
 - [x] Filtro por congregação
 - [x] Histórico financeiro detalhado via relatório
-- [ ] Indicadores visuais de arrecadação
+- [x] Indicadores visuais de arrecadação
 
 ### Pagamentos
 
 - [x] Controle de pagamento parcial
 - [x] Cálculo automático de saldo
 - [x] Status de pagamento
-- [ ] Controle de parcelas
-- [ ] Histórico detalhado de alterações
-- [ ] Baixa automática por tipo de pagamento
+- [x] Controle de parcelas
+- [x] Histórico detalhado de alterações
+- [x] Baixa automática por tipo de pagamento
 
 ### Relatórios
 
 - [x] Relatório por período
 - [x] Relatório por congregação
 - [x] Exportação CSV
-- [ ] Exportação em PDF
-- [ ] Exportação em Excel
+- [x] Exportação em PDF
+- [x] Exportação em Excel
 
 ### Frontend
 
 - [x] Estrutura inicial em React
 - [x] Tela de login
 - [x] Integração inicial com API
-- [ ] Dashboard visual completo
+- [x] Dashboard visual completo
 - [x] Tela completa de cadastro
 - [x] Tela de vendas e pagamentos
 - [x] Tela de relatórios
+- [x] Tela de histórico de alterações
 
 ### Qualidade
 
@@ -219,7 +237,7 @@ A API permite controlar informações como:
 - [x] Testes unitários
 - [x] Teste de contexto da aplicação
 - [x] Padronização completa de respostas de erro
-- [ ] Logs estruturados da aplicação
+- [x] Logs estruturados da aplicação
 
 ### Deploy
 
@@ -279,6 +297,13 @@ mvnw.cmd spring-boot:run
 http://localhost:8080/swagger-ui.html
 ```
 
+Usuário inicial criado automaticamente em ambiente local:
+
+```text
+Usuário: rayssa
+Senha: 123456
+```
+
 ---
 
 ## Variáveis de Ambiente
@@ -336,6 +361,18 @@ Execute o projeto:
 
 ```bash
 npm run dev
+```
+
+O frontend ficará disponível em:
+
+```text
+http://localhost:5173
+```
+
+O backend deve estar em execução em:
+
+```text
+http://localhost:8080
 ```
 
 ---

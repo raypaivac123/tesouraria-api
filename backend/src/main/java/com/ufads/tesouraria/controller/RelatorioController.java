@@ -46,4 +46,34 @@ public class RelatorioController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-financeiro.csv")
                 .body(csv);
     }
+
+    @Operation(summary = "Exportar relatorio financeiro em PDF")
+    @GetMapping(value = "/financeiro/pdf", produces = "application/pdf")
+    public ResponseEntity<byte[]> exportarPdf(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+            @RequestParam(required = false) Long congregacaoId
+    ) {
+        byte[] pdf = service.gerarPdf(dataInicial, dataFinal, congregacaoId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-financeiro.pdf")
+                .body(pdf);
+    }
+
+    @Operation(summary = "Exportar relatorio financeiro em Excel")
+    @GetMapping(value = "/financeiro/excel", produces = "application/vnd.ms-excel")
+    public ResponseEntity<byte[]> exportarExcel(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+            @RequestParam(required = false) Long congregacaoId
+    ) {
+        byte[] excel = service.gerarExcel(dataInicial, dataFinal, congregacaoId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-financeiro.xls")
+                .body(excel);
+    }
 }

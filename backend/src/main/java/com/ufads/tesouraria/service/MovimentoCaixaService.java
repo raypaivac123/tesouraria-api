@@ -8,6 +8,8 @@ import com.ufads.tesouraria.enums.TipoMovimento;
 import com.ufads.tesouraria.exception.ResourceNotFoundException;
 import com.ufads.tesouraria.repository.MovimentoCaixaRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,7 +20,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MovimentoCaixaService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MovimentoCaixaService.class);
+
     private final MovimentoCaixaRepository repository;
+    private final HistoricoAlteracaoService historicoService;
 
     public MovimentoCaixa criar(MovimentoCaixaRequestDTO dto) {
         validarRegras(dto);
@@ -37,7 +42,10 @@ public class MovimentoCaixaService {
                 .ativo(true)
                 .build();
 
-        return repository.save(movimento);
+        MovimentoCaixa salvo = repository.save(movimento);
+        historicoService.registrar("MovimentoCaixa", salvo.getId(), "CRIACAO", "Movimento criado: " + salvo.getDescricao());
+        logger.info("event=movimento_caixa_criado movimentoId={} tipo={} valor={}", salvo.getId(), salvo.getTipo(), salvo.getValor());
+        return salvo;
     }
 
     public List<MovimentoCaixa> listarAtivos() {
@@ -100,13 +108,18 @@ public class MovimentoCaixaService {
         movimento.setObservacao(dto.getObservacao());
         movimento.setJustificativa(dto.getJustificativa());
 
-        return repository.save(movimento);
+        MovimentoCaixa salvo = repository.save(movimento);
+        historicoService.registrar("MovimentoCaixa", salvo.getId(), "ATUALIZACAO", "Movimento atualizado: " + salvo.getDescricao());
+        logger.info("event=movimento_caixa_atualizado movimentoId={} tipo={} valor={}", salvo.getId(), salvo.getTipo(), salvo.getValor());
+        return salvo;
     }
 
     public void desativar(Long id) {
         MovimentoCaixa movimento = buscarPorId(id);
         movimento.setAtivo(false);
         repository.save(movimento);
+        historicoService.registrar("MovimentoCaixa", movimento.getId(), "EXCLUSAO", "Movimento desativado: " + movimento.getDescricao());
+        logger.info("event=movimento_caixa_desativado movimentoId={}", movimento.getId());
     }
 
     private void validarRegras(MovimentoCaixaRequestDTO dto) {

@@ -29,8 +29,18 @@ public class VendaRequestDTO {
     @DecimalMin(value = "0.00")
     private BigDecimal valorPago;
 
+    @DecimalMin(value = "0.00")
+    private BigDecimal valorPix;
+
+    @DecimalMin(value = "0.00")
+    private BigDecimal valorDinheiro;
+
     @NotNull
     private FormaPagamento formaPagamento;
+
+    private Integer numeroParcelas;
+
+    private Integer parcelaAtual;
 
     private String observacao;
 }

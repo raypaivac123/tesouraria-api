@@ -51,6 +51,12 @@ public class UniformePandeiro {
     @Column(nullable = false)
     private StatusPagamento statusPagamento;
 
+    @Column
+    private Integer numeroParcelas;
+
+    @Column
+    private Integer parcelaAtual;
+
     private LocalDate dataPagamento;
 
     @Column(length = 500)

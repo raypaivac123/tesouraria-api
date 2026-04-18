@@ -41,6 +41,12 @@ public class Venda {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valorPago;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal valorPix;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal valorDinheiro;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal pendente;
 
@@ -50,6 +56,12 @@ public class Venda {
 
     @Column(nullable = false)
     private String statusPagamento;
+
+    @Column
+    private Integer numeroParcelas;
+
+    @Column
+    private Integer parcelaAtual;
 
     private String observacao;
 

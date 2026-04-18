@@ -25,6 +25,8 @@ public class UniformeFestividadeResponseDTO {
     private BigDecimal totalPago;
     private BigDecimal saldoPendente;
     private StatusPagamento statusPagamento;
+    private Integer numeroParcelas;
+    private Integer parcelaAtual;
     private LocalDate dataPagamento;
     private String observacao;
     private Boolean ativo;

@@ -23,6 +23,8 @@ public class UniformePandeiroMapper {
                 .totalPago(entity.getTotalPago())
                 .saldoPendente(entity.getSaldoPendente())
                 .statusPagamento(entity.getStatusPagamento())
+                .numeroParcelas(entity.getNumeroParcelas())
+                .parcelaAtual(entity.getParcelaAtual())
                 .dataPagamento(entity.getDataPagamento())
                 .observacao(entity.getObservacao())
                 .ativo(entity.getAtivo())

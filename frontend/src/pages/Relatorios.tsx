@@ -267,6 +267,30 @@ export default function Relatorios() {
     return titulos[aba];
   }
 
+  async function baixarRelatorio(tipo: "pdf" | "excel") {
+    if (!dataInicial || !dataFinal) {
+      alert("Informe data inicial e data final para exportar");
+      return;
+    }
+
+    const response = await api.get(`/relatorios/financeiro/${tipo}`, {
+      params: {
+        dataInicial,
+        dataFinal,
+        congregacaoId: congregacaoId || undefined
+      },
+      responseType: "blob"
+    });
+
+    const extensao = tipo === "pdf" ? "pdf" : "xls";
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `relatorio-financeiro.${extensao}`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
     <Layout>
       <div className="page-actions" style={{ alignItems: "flex-start", marginBottom: 24 }}>
@@ -275,9 +299,17 @@ export default function Relatorios() {
           <p>Visualize e imprima relatórios financeiros</p>
         </div>
 
-        <button className="btn btn-outline no-print" type="button" onClick={() => window.print()}>
-          <i className="bi bi-printer" aria-hidden="true"></i> Imprimir
-        </button>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn btn-outline no-print" type="button" onClick={() => window.print()}>
+            <i className="bi bi-printer" aria-hidden="true"></i> Imprimir
+          </button>
+          <button className="btn btn-outline no-print" type="button" onClick={() => baixarRelatorio("pdf")}>
+            <i className="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
+          </button>
+          <button className="btn btn-outline no-print" type="button" onClick={() => baixarRelatorio("excel")}>
+            <i className="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Excel
+          </button>
+        </div>
       </div>
 
       <div className="card no-print" style={{ marginBottom: 30 }}>

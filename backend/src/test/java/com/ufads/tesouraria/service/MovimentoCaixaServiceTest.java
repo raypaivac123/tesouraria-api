@@ -25,6 +25,9 @@ class MovimentoCaixaServiceTest {
     @Mock
     private MovimentoCaixaRepository repository;
 
+    @Mock
+    private HistoricoAlteracaoService historicoService;
+
     @InjectMocks
     private MovimentoCaixaService service;
 

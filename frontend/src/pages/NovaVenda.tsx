@@ -17,7 +17,11 @@ export default function NovaVenda() {
     loteVendaId: "",
     quantidade: 1,
     valorPago: 0,
+    valorPix: 0,
+    valorDinheiro: 0,
     formaPagamento: "PIX",
+    numeroParcelas: 1,
+    parcelaAtual: 1,
     observacao: ""
   });
 
@@ -45,11 +49,18 @@ export default function NovaVenda() {
     e.preventDefault();
 
     try {
+      const valorPix = form.formaPagamento === "MISTO" ? Number(form.valorPix || 0) : undefined;
+      const valorDinheiro = form.formaPagamento === "MISTO" ? Number(form.valorDinheiro || 0) : undefined;
+
       await api.post("/vendas", {
         ...form,
         loteVendaId: Number(form.loteVendaId),
         quantidade: Number(form.quantidade),
-        valorPago: Number(form.valorPago)
+        valorPago: Number(form.valorPago),
+        valorPix,
+        valorDinheiro,
+        numeroParcelas: Number(form.numeroParcelas),
+        parcelaAtual: Number(form.parcelaAtual)
       });
 
       alert("Venda salva com sucesso");
@@ -71,6 +82,30 @@ export default function NovaVenda() {
           <div className="form-group">
             <label>Comprador *</label>
             <input className="form-control" name="comprador" placeholder="Nome da pessoa que comprou" value={form.comprador} onChange={handleChange} />
+          </div>
+
+          {form.formaPagamento === "MISTO" && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>Valor em PIX (R$)</label>
+                <input className="form-control" name="valorPix" type="number" min="0" step="0.01" value={form.valorPix} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label>Valor em Dinheiro (R$)</label>
+                <input className="form-control" name="valorDinheiro" type="number" min="0" step="0.01" value={form.valorDinheiro} onChange={handleChange} />
+              </div>
+            </div>
+          )}
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Total de Parcelas</label>
+              <input className="form-control" name="numeroParcelas" type="number" min="1" step="1" value={form.numeroParcelas} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label>Parcela Atual</label>
+              <input className="form-control" name="parcelaAtual" type="number" min="1" step="1" value={form.parcelaAtual} onChange={handleChange} />
+            </div>
           </div>
 
           <div className="form-group">

@@ -14,9 +14,13 @@ type Venda = {
   custoTotal: number;
   lucroPrevisto: number;
   valorPago: number;
+  valorPix: number;
+  valorDinheiro: number;
   pendente: number;
   formaPagamento: string;
   statusPagamento: string;
+  numeroParcelas: number;
+  parcelaAtual: number;
   observacao: string;
 };
 
@@ -73,7 +77,11 @@ export default function Vendas() {
     loteVendaId: "",
     quantidade: 1,
     valorPago: 0,
+    valorPix: 0,
+    valorDinheiro: 0,
     formaPagamento: "PIX",
+    numeroParcelas: 1,
+    parcelaAtual: 1,
     observacao: ""
   });
 
@@ -108,7 +116,11 @@ export default function Vendas() {
       loteVendaId: String(item.loteVendaId || ""),
       quantidade: Number(item.quantidade || 1),
       valorPago: Number(item.valorPago || 0),
+      valorPix: Number(item.valorPix || 0),
+      valorDinheiro: Number(item.valorDinheiro || 0),
       formaPagamento: item.formaPagamento || "PIX",
+      numeroParcelas: Number(item.numeroParcelas || 1),
+      parcelaAtual: Number(item.parcelaAtual || 1),
       observacao: item.observacao || ""
     });
   }
@@ -120,7 +132,11 @@ export default function Vendas() {
       loteVendaId: "",
       quantidade: 1,
       valorPago: 0,
+      valorPix: 0,
+      valorDinheiro: 0,
       formaPagamento: "PIX",
+      numeroParcelas: 1,
+      parcelaAtual: 1,
       observacao: ""
     });
   }
@@ -144,7 +160,11 @@ export default function Vendas() {
         ...form,
         loteVendaId: Number(form.loteVendaId),
         quantidade: Number(form.quantidade),
-        valorPago: Number(form.valorPago)
+        valorPago: Number(form.valorPago),
+        valorPix: form.formaPagamento === "MISTO" ? Number(form.valorPix || 0) : undefined,
+        valorDinheiro: form.formaPagamento === "MISTO" ? Number(form.valorDinheiro || 0) : undefined,
+        numeroParcelas: Number(form.numeroParcelas),
+        parcelaAtual: Number(form.parcelaAtual)
       });
 
       cancelarEdicao();
@@ -323,6 +343,32 @@ export default function Vendas() {
               </div>
             </div>
 
+            {form.formaPagamento === "MISTO" && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Valor em PIX (R$)</label>
+                  <input className="form-control" name="valorPix" type="number" min="0" step="0.01" value={form.valorPix} onChange={handleChange} />
+                </div>
+
+                <div className="form-group">
+                  <label>Valor em Dinheiro (R$)</label>
+                  <input className="form-control" name="valorDinheiro" type="number" min="0" step="0.01" value={form.valorDinheiro} onChange={handleChange} />
+                </div>
+              </div>
+            )}
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Total de Parcelas</label>
+                <input className="form-control" name="numeroParcelas" type="number" min="1" step="1" value={form.numeroParcelas} onChange={handleChange} />
+              </div>
+
+              <div className="form-group">
+                <label>Parcela Atual</label>
+                <input className="form-control" name="parcelaAtual" type="number" min="1" step="1" value={form.parcelaAtual} onChange={handleChange} />
+              </div>
+            </div>
+
             <div className="form-group">
               <label>Observacao</label>
               <input className="form-control" name="observacao" value={form.observacao} onChange={handleChange} />
@@ -350,6 +396,7 @@ export default function Vendas() {
                 <th>Lucro Real.</th>
                 <th>Pendente</th>
                 <th>Forma</th>
+                <th>Parcela</th>
                 <th>Status</th>
                 <th>Observ.</th>
                 <th>Acoes</th>
@@ -367,6 +414,7 @@ export default function Vendas() {
                   <td className="money positive">{moeda.format(Number(item.valorPago || 0) - Number(item.custoTotal || 0))}</td>
                   <td className="money negative">{moeda.format(item.pendente)}</td>
                   <td><span className="badge badge-pix">{item.formaPagamento}</span></td>
+                  <td>{item.parcelaAtual || 1}/{item.numeroParcelas || 1}</td>
                   <td><span className={`badge ${statusClass(item.statusPagamento)}`}>{item.statusPagamento}</span></td>
                   <td>{item.observacao || "-"}</td>
                   <td>

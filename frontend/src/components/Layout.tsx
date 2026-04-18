@@ -38,6 +38,10 @@ export default function Layout({ children }: Props) {
             <i className="bi bi-clipboard-data" aria-hidden="true"></i> Relatórios
           </NavLink>
 
+          <NavLink className="nav-link" to="/historico">
+            <i className="bi bi-clock-history" aria-hidden="true"></i> Historico
+          </NavLink>
+
           <div className="nav-section">Uniformes</div>
           <NavLink className="nav-link" to="/uniforme-festividade">
             <i className="bi bi-bag-heart" aria-hidden="true"></i> Uniforme Festividade

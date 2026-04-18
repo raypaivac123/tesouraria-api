@@ -32,6 +32,9 @@ class VendaServiceTest {
     @Mock
     private ApplicationEventPublisher publisher;
 
+    @Mock
+    private HistoricoAlteracaoService historicoService;
+
     @InjectMocks
     private VendaService service;
 

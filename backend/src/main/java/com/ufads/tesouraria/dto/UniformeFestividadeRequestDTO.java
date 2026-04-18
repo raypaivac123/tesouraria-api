@@ -37,6 +37,10 @@ public class UniformeFestividadeRequestDTO {
     @DecimalMin(value = "0.00")
     private BigDecimal valorDinheiro;
 
+    private Integer numeroParcelas;
+
+    private Integer parcelaAtual;
+
     private LocalDate dataPagamento;
 
     private String observacao;

@@ -19,9 +19,13 @@ public class VendaMapper {
                 .custoTotal(entity.getCustoTotal())
                 .lucroPrevisto(entity.getLucroPrevisto())
                 .valorPago(entity.getValorPago())
+                .valorPix(entity.getValorPix())
+                .valorDinheiro(entity.getValorDinheiro())
                 .pendente(entity.getPendente())
                 .formaPagamento(entity.getFormaPagamento())
                 .statusPagamento(entity.getStatusPagamento())
+                .numeroParcelas(entity.getNumeroParcelas())
+                .parcelaAtual(entity.getParcelaAtual())
                 .observacao(entity.getObservacao())
                 .ativo(entity.getAtivo())
                 .build();

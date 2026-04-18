@@ -11,6 +11,8 @@ import com.ufads.tesouraria.exception.ResourceNotFoundException;
 import com.ufads.tesouraria.repository.CongregacaoRepository;
 import com.ufads.tesouraria.repository.UniformeFestividadeRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -21,22 +23,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UniformeFestividadeService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UniformeFestividadeService.class);
+
     private final UniformeFestividadeRepository repository;
     private final CongregacaoRepository congregacaoRepository;
     private final ApplicationEventPublisher publisher;
+    private final HistoricoAlteracaoService historicoService;
 
     public UniformeFestividade criar(UniformeFestividadeRequestDTO dto) {
         Congregacao congregacao = congregacaoRepository.findById(dto.getCongregacaoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Congregação não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Congregacao nao encontrada"));
 
         BigDecimal valorPix = dto.getValorPix() == null ? BigDecimal.ZERO : dto.getValorPix();
         BigDecimal valorDinheiro = dto.getValorDinheiro() == null ? BigDecimal.ZERO : dto.getValorDinheiro();
         BigDecimal totalPago = valorPix.add(valorDinheiro);
         BigDecimal saldoPendente = dto.getValorUniforme().subtract(totalPago);
+        Integer numeroParcelas = dto.getNumeroParcelas() == null ? 1 : dto.getNumeroParcelas();
+        Integer parcelaAtual = dto.getParcelaAtual() == null ? 1 : dto.getParcelaAtual();
 
         if (saldoPendente.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("O total pago não pode ser maior que o valor do uniforme");
+            throw new RuntimeException("O total pago nao pode ser maior que o valor do uniforme");
         }
+        validarParcelas(numeroParcelas, parcelaAtual);
 
         StatusPagamento status = definirStatus(totalPago, dto.getValorUniforme());
 
@@ -51,6 +59,8 @@ public class UniformeFestividadeService {
                 .totalPago(totalPago)
                 .saldoPendente(saldoPendente)
                 .statusPagamento(status)
+                .numeroParcelas(numeroParcelas)
+                .parcelaAtual(parcelaAtual)
                 .dataPagamento(dto.getDataPagamento())
                 .observacao(dto.getObservacao())
                 .ativo(true)
@@ -71,7 +81,10 @@ public class UniformeFestividadeService {
             );
         }
 
-        return repository.save(entity);
+        UniformeFestividade salvo = repository.save(entity);
+        historicoService.registrar("UniformeFestividade", salvo.getId(), "CRIACAO", "Registro criado para " + salvo.getNomeMulher());
+        logger.info("event=uniforme_festividade_criado uniformeId={} nomeMulher={} totalPago={}", salvo.getId(), salvo.getNomeMulher(), salvo.getTotalPago());
+        return salvo;
     }
 
     public List<UniformeFestividade> listarAtivos() {
@@ -98,23 +111,26 @@ public class UniformeFestividadeService {
 
     public UniformeFestividade buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Registro de uniforme festividade não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Registro de uniforme festividade nao encontrado"));
     }
 
     public UniformeFestividade atualizar(Long id, UniformeFestividadeRequestDTO dto) {
         UniformeFestividade entity = buscarPorId(id);
 
         Congregacao congregacao = congregacaoRepository.findById(dto.getCongregacaoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Congregação não encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Congregacao nao encontrada"));
 
         BigDecimal valorPix = dto.getValorPix() == null ? BigDecimal.ZERO : dto.getValorPix();
         BigDecimal valorDinheiro = dto.getValorDinheiro() == null ? BigDecimal.ZERO : dto.getValorDinheiro();
         BigDecimal totalPago = valorPix.add(valorDinheiro);
         BigDecimal saldoPendente = dto.getValorUniforme().subtract(totalPago);
+        Integer numeroParcelas = dto.getNumeroParcelas() == null ? 1 : dto.getNumeroParcelas();
+        Integer parcelaAtual = dto.getParcelaAtual() == null ? 1 : dto.getParcelaAtual();
 
         if (saldoPendente.compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("O total pago não pode ser maior que o valor do uniforme");
+            throw new RuntimeException("O total pago nao pode ser maior que o valor do uniforme");
         }
+        validarParcelas(numeroParcelas, parcelaAtual);
 
         StatusPagamento status = definirStatus(totalPago, dto.getValorUniforme());
 
@@ -128,16 +144,23 @@ public class UniformeFestividadeService {
         entity.setTotalPago(totalPago);
         entity.setSaldoPendente(saldoPendente);
         entity.setStatusPagamento(status);
+        entity.setNumeroParcelas(numeroParcelas);
+        entity.setParcelaAtual(parcelaAtual);
         entity.setDataPagamento(dto.getDataPagamento());
         entity.setObservacao(dto.getObservacao());
 
-        return repository.save(entity);
+        UniformeFestividade salvo = repository.save(entity);
+        historicoService.registrar("UniformeFestividade", salvo.getId(), "ATUALIZACAO", "Registro atualizado para " + salvo.getNomeMulher());
+        logger.info("event=uniforme_festividade_atualizado uniformeId={} nomeMulher={} totalPago={}", salvo.getId(), salvo.getNomeMulher(), salvo.getTotalPago());
+        return salvo;
     }
 
     public void desativar(Long id) {
         UniformeFestividade entity = buscarPorId(id);
         entity.setAtivo(false);
         repository.save(entity);
+        historicoService.registrar("UniformeFestividade", entity.getId(), "EXCLUSAO", "Registro desativado para " + entity.getNomeMulher());
+        logger.info("event=uniforme_festividade_desativado uniformeId={}", entity.getId());
     }
 
     private StatusPagamento definirStatus(BigDecimal totalPago, BigDecimal valorUniforme) {
@@ -161,5 +184,14 @@ public class UniformeFestividadeService {
             return FormaPagamento.PIX;
         }
         return FormaPagamento.DINHEIRO;
+    }
+
+    private void validarParcelas(Integer numeroParcelas, Integer parcelaAtual) {
+        if (numeroParcelas < 1) {
+            throw new RuntimeException("numeroParcelas deve ser maior ou igual a 1");
+        }
+        if (parcelaAtual < 1 || parcelaAtual > numeroParcelas) {
+            throw new RuntimeException("parcelaAtual deve estar entre 1 e numeroParcelas");
+        }
     }
 }

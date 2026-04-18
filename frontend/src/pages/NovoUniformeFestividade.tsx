@@ -37,6 +37,8 @@ export default function NovoUniformeFestividade() {
     valorUniforme: "",
     valorPix: "",
     valorDinheiro: "",
+    numeroParcelas: 1,
+    parcelaAtual: 1,
     dataPagamento: "",
     observacao: ""
   });
@@ -79,6 +81,8 @@ export default function NovoUniformeFestividade() {
         valorUniforme: Number(form.valorUniforme),
         valorPix,
         valorDinheiro,
+        numeroParcelas: Number(form.numeroParcelas),
+        parcelaAtual: Number(form.parcelaAtual),
         dataPagamento: form.dataPagamento || null
       });
 
@@ -145,6 +149,17 @@ export default function NovoUniformeFestividade() {
             <div className="form-group">
               <label>Valor em Dinheiro (R$)</label>
               <input className="form-control" name="valorDinheiro" type="number" min="0" step="0.01" placeholder="0,00" value={form.valorDinheiro} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Total de Parcelas</label>
+              <input className="form-control" name="numeroParcelas" type="number" min="1" step="1" value={form.numeroParcelas} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label>Parcela Atual</label>
+              <input className="form-control" name="parcelaAtual" type="number" min="1" step="1" value={form.parcelaAtual} onChange={handleChange} />
             </div>
           </div>
 

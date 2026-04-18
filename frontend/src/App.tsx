@@ -14,6 +14,7 @@ import NovoUniformeFestividade from "./pages/NovoUniformeFestividade";
 import UniformePandeiro from "./pages/UniformePandeiro";
 import NovoUniformePandeiro from "./pages/NovoUniformePandeiro";
 import Relatorios from "./pages/Relatorios";
+import Historico from "./pages/Historico";
 import PrivateRoute from "./routes/PrivateRoute";
 
 function App() {
@@ -144,6 +145,15 @@ function App() {
           element={
             <PrivateRoute>
               <Relatorios />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/historico"
+          element={
+            <PrivateRoute>
+              <Historico />
             </PrivateRoute>
           }
         />

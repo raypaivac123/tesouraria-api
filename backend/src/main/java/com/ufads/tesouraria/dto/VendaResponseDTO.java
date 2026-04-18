@@ -21,9 +21,13 @@ public class VendaResponseDTO {
     private BigDecimal custoTotal;
     private BigDecimal lucroPrevisto;
     private BigDecimal valorPago;
+    private BigDecimal valorPix;
+    private BigDecimal valorDinheiro;
     private BigDecimal pendente;
     private FormaPagamento formaPagamento;
     private String statusPagamento;
+    private Integer numeroParcelas;
+    private Integer parcelaAtual;
     private String observacao;
     private Boolean ativo;
 }
