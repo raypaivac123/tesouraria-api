@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import api from "../api/api";
@@ -18,9 +18,18 @@ type Congregacao = {
   nome: string;
 };
 
+function normalizarTexto(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export default function Mulheres() {
   const [mulheres, setMulheres] = useState<Mulher[]>([]);
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
+  const [busca, setBusca] = useState("");
+  const [congregacaoFiltro, setCongregacaoFiltro] = useState("");
   const [editando, setEditando] = useState<Mulher | null>(null);
   const [form, setForm] = useState({
     nome: "",
@@ -45,6 +54,23 @@ export default function Mulheres() {
   useEffect(() => {
     carregarDados();
   }, []);
+
+  const congregacoesOrdenadas = useMemo(() => {
+    return [...congregacoes].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }, [congregacoes]);
+
+  const mulheresFiltradas = useMemo(() => {
+    const termoBusca = normalizarTexto(busca.trim());
+
+    return mulheres
+      .filter((item) => {
+        const combinaNome = !termoBusca || normalizarTexto(item.nome).includes(termoBusca);
+        const combinaCongregacao = !congregacaoFiltro || String(item.congregacaoId) === congregacaoFiltro;
+
+        return combinaNome && combinaCongregacao;
+      })
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }, [busca, congregacaoFiltro, mulheres]);
 
   function abrirEdicao(item: Mulher) {
     setEditando(item);
@@ -112,9 +138,18 @@ export default function Mulheres() {
 
       <div className="page-actions">
         <div className="filters-bar">
-          <input className="form-control" type="text" placeholder="Buscar nome..." disabled />
-          <select className="form-control" disabled>
-            <option>Todas as congregações</option>
+          <input
+            className="form-control"
+            type="text"
+            placeholder="Buscar nome..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+          <select className="form-control" value={congregacaoFiltro} onChange={(e) => setCongregacaoFiltro(e.target.value)}>
+            <option value="">Todas as congregações</option>
+            {congregacoesOrdenadas.map((item) => (
+              <option key={item.id} value={item.id}>{item.nome}</option>
+            ))}
           </select>
         </div>
         <Link className="btn btn-primary" to="/nova-mulher">
@@ -139,7 +174,7 @@ export default function Mulheres() {
                 <label>Congregação *</label>
                 <select className="form-control" name="congregacaoId" value={form.congregacaoId} onChange={handleChange}>
                   <option value="">Selecione</option>
-                  {congregacoes.map((item) => (
+                  {congregacoesOrdenadas.map((item) => (
                     <option key={item.id} value={item.id}>{item.nome}</option>
                   ))}
                 </select>
@@ -167,7 +202,7 @@ export default function Mulheres() {
               </tr>
             </thead>
             <tbody>
-              {mulheres.map((item) => (
+              {mulheresFiltradas.map((item) => (
                 <tr key={item.id}>
                   <td>{item.nome}</td>
                   <td>{item.nomeCongregacao}</td>
@@ -189,10 +224,10 @@ export default function Mulheres() {
           </table>
         </div>
 
-        {mulheres.length === 0 && (
+        {mulheresFiltradas.length === 0 && (
           <div className="empty-state">
             <div className="icon"><i className="bi bi-people" aria-hidden="true"></i></div>
-            <p>Nenhuma mulher cadastrada.</p>
+            <p>{mulheres.length === 0 ? "Nenhuma mulher cadastrada." : "Nenhuma mulher encontrada com esses filtros."}</p>
           </div>
         )}
       </div>

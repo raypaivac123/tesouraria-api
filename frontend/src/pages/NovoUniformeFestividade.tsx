@@ -10,6 +10,15 @@ type Congregacao = {
   nome: string;
 };
 
+type Mulher = {
+  id: number;
+  nome: string;
+  telefone: string;
+  congregacaoId: number;
+  nomeCongregacao: string;
+  ativo: boolean;
+};
+
 function mensagemErroApi(error: unknown, acao: string) {
   if (!axios.isAxiosError(error)) {
     return `Erro ao ${acao}`;
@@ -29,6 +38,8 @@ export default function NovoUniformeFestividade() {
   const navigate = useNavigate();
 
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
+  const [mulheres, setMulheres] = useState<Mulher[]>([]);
+  const [mulherSelecionadaId, setMulherSelecionadaId] = useState("");
   const [form, setForm] = useState({
     nomeMulher: "",
     telefone: "",
@@ -44,22 +55,40 @@ export default function NovoUniformeFestividade() {
   });
 
   useEffect(() => {
-    async function carregarCongregacoes() {
+    async function carregarDados() {
       try {
-        const response = await api.get("/congregacoes");
-        setCongregacoes(response.data);
+        const [congregacoesResponse, mulheresResponse] = await Promise.all([
+          api.get("/congregacoes"),
+          api.get("/mulheres")
+        ]);
+
+        setCongregacoes(congregacoesResponse.data);
+        setMulheres(mulheresResponse.data);
       } catch (error) {
-        console.error("Erro ao carregar congregações", error);
+        console.error("Erro ao carregar dados do formulário", error);
       }
     }
 
-    carregarCongregacoes();
+    carregarDados();
   }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setForm({
       ...form,
       [e.target.name]: limitInputValue(e.target.name, e.target.value)
+    });
+  }
+
+  function handleMulherChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const mulherId = e.target.value;
+    const mulher = mulheres.find((item) => String(item.id) === mulherId);
+
+    setMulherSelecionadaId(mulherId);
+    setForm({
+      ...form,
+      nomeMulher: mulher?.nome || "",
+      telefone: mulher?.telefone || "",
+      congregacaoId: mulher ? String(mulher.congregacaoId) : ""
     });
   }
 
@@ -106,11 +135,18 @@ export default function NovoUniformeFestividade() {
           <div className="form-row">
             <div className="form-group">
               <label>Nome da Mulher *</label>
-              <input className="form-control" name="nomeMulher" placeholder="Nome completo" value={form.nomeMulher} onChange={handleChange} />
+              <select className="form-control" value={mulherSelecionadaId} onChange={handleMulherChange} required>
+                <option value="">Selecione uma mulher cadastrada</option>
+                {mulheres.filter((item) => item.ativo !== false).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.nome}{item.nomeCongregacao ? ` - ${item.nomeCongregacao}` : ""}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Congregação *</label>
-              <select className="form-control" name="congregacaoId" value={form.congregacaoId} onChange={handleChange}>
+              <select className="form-control" name="congregacaoId" value={form.congregacaoId} onChange={handleChange} disabled={Boolean(mulherSelecionadaId)}>
                 <option value="">Selecione uma congregação</option>
                 {congregacoes.map((item) => (
                   <option key={item.id} value={item.id}>{item.nome}</option>
