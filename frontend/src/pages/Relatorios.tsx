@@ -131,7 +131,10 @@ function formaUniforme(valorPix: number, valorDinheiro: number) {
   return "";
 }
 
-function combinaFormaPagamento(linha: LinhaRelatorio, formaPagamento: FormaPagamentoFiltro) {
+function combinaFormaPagamento(
+  linha: Pick<LinhaRelatorio, "forma" | "entradaPix" | "entradaDinheiro">,
+  formaPagamento: FormaPagamentoFiltro
+) {
   if (!formaPagamento) return true;
   if (formaPagamento === "PIX") return linha.entradaPix > 0;
   if (formaPagamento === "DINHEIRO") return linha.entradaDinheiro > 0;
@@ -323,6 +326,41 @@ export default function Relatorios() {
     pendente: linhas.reduce((total, linha) => total + Number(linha.pendente || 0), 0)
   }), [formaPagamento, linhas]);
 
+  const entradasPorCategoria = useMemo(() => {
+    const categorias = new Map<string, number>();
+
+    caixa
+      .filter((item) => item.tipo === "ENTRADA")
+      .map((item) => {
+        const valor = Number(item.valor || 0);
+        const pagamentos = valoresPorForma(item.formaPagamento, valor, item.valorPix, item.valorDinheiro);
+
+        return {
+          categoria: item.categoria || "Sem categoria",
+          data: item.data,
+          forma: item.formaPagamento,
+          entrada: valor,
+          entradaPix: pagamentos.pix,
+          entradaDinheiro: pagamentos.dinheiro
+        };
+      })
+      .filter((item) => dentroDoPeriodo(item.data, dataInicial, dataFinal))
+      .filter((item) => combinaFormaPagamento(item, formaPagamento))
+      .forEach((item) => {
+        const valor = formaPagamento === "PIX"
+          ? item.entradaPix
+          : formaPagamento === "DINHEIRO"
+            ? item.entradaDinheiro
+            : item.entrada;
+
+        categorias.set(item.categoria, (categorias.get(item.categoria) || 0) + valor);
+      });
+
+    return Array.from(categorias.entries())
+      .map(([categoria, total]) => ({ categoria, total }))
+      .sort((a, b) => b.total - a.total);
+  }, [caixa, dataFinal, dataInicial, formaPagamento]);
+
   function limparFiltros() {
     setDataInicial("");
     setDataFinal("");
@@ -492,6 +530,37 @@ export default function Relatorios() {
                 <div className="stat-value small">{moeda.format(resumo.pendente)}</div>
               </div>
             </div>
+
+            {aba === "geral" && (
+              <div className="card" style={{ marginTop: 20 }}>
+                <div className="card-title">Entradas por Categoria</div>
+
+                {entradasPorCategoria.length > 0 ? (
+                  <div className="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Categoria</th>
+                          <th>Total de Entradas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entradasPorCategoria.map((item) => (
+                          <tr key={item.categoria}>
+                            <td>{item.categoria}</td>
+                            <td className="money positive">{moeda.format(item.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <p>Nenhuma entrada de caixa encontrada para os filtros selecionados.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="table-wrapper" style={{ marginTop: 20 }}>
               <table>
