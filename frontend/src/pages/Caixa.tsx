@@ -43,6 +43,8 @@ function mensagemErroApi(error: unknown, acao: string) {
 
 export default function Caixa() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
+  const [busca, setBusca] = useState("");
+  const [tipoFiltro, setTipoFiltro] = useState("");
   const [editando, setEditando] = useState<MovimentoCaixa | null>(null);
   const [form, setForm] = useState({
     data: "",
@@ -149,16 +151,33 @@ export default function Caixa() {
     }
   }
 
+  const movimentosFiltrados = useMemo(() => {
+    const termoBusca = busca.trim().toLowerCase();
+
+    return movimentos
+      .filter((item) => {
+        const combinaBusca = !termoBusca
+          || item.descricao?.toLowerCase().includes(termoBusca)
+          || item.categoria?.toLowerCase().includes(termoBusca)
+          || item.formaPagamento?.toLowerCase().includes(termoBusca)
+          || item.observacao?.toLowerCase().includes(termoBusca);
+        const combinaTipo = !tipoFiltro || item.tipo === tipoFiltro;
+
+        return combinaBusca && combinaTipo;
+      })
+      .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  }, [busca, movimentos, tipoFiltro]);
+
   const resumo = useMemo(() => {
-    const entradas = movimentos
+    const entradas = movimentosFiltrados
       .filter((item) => item.tipo === "ENTRADA")
       .reduce((total, item) => total + Number(item.valor), 0);
-    const saidas = movimentos
+    const saidas = movimentosFiltrados
       .filter((item) => item.tipo === "SAIDA")
       .reduce((total, item) => total + Number(item.valor), 0);
 
     return { entradas, saidas, saldo: entradas - saidas };
-  }, [movimentos]);
+  }, [movimentosFiltrados]);
 
   return (
     <Layout>
@@ -184,9 +203,11 @@ export default function Caixa() {
 
       <div className="page-actions">
         <div className="filters-bar">
-          <input className="form-control" type="text" placeholder="Buscar..." disabled />
-          <select className="form-control" disabled>
-            <option>Todos os tipos</option>
+          <input className="form-control" type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+          <select className="form-control" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}>
+            <option value="">Todos os tipos</option>
+            <option value="ENTRADA">Entradas</option>
+            <option value="SAIDA">Saídas</option>
           </select>
         </div>
         <Link className="btn btn-primary" to="/novo-movimento">
@@ -286,7 +307,7 @@ export default function Caixa() {
               </tr>
             </thead>
             <tbody>
-              {movimentos.map((item) => (
+              {movimentosFiltrados.map((item) => (
                 <tr key={item.id}>
                   <td>{formatarData(item.data)}</td>
                   <td>
@@ -312,10 +333,10 @@ export default function Caixa() {
           </table>
         </div>
 
-        {movimentos.length === 0 && (
+        {movimentosFiltrados.length === 0 && (
           <div className="empty-state">
             <div className="icon"><i className="bi bi-cash-coin" aria-hidden="true"></i></div>
-            <p>Nenhuma movimentacao encontrada.</p>
+            <p>{movimentos.length === 0 ? "Nenhuma movimentacao encontrada." : "Nenhuma movimentacao encontrada para os filtros selecionados."}</p>
           </div>
         )}
       </div>
