@@ -22,6 +22,8 @@ type MovimentoCaixa = {
   descricao: string;
   categoria: string;
   formaPagamento: string;
+  valorPix?: number;
+  valorDinheiro?: number;
   valor: number;
 };
 
@@ -33,6 +35,8 @@ type Venda = {
   quantidade: number;
   total: number;
   valorPago: number;
+  valorPix?: number;
+  valorDinheiro?: number;
   pendente: number;
   formaPagamento: string;
   statusPagamento: string;
@@ -68,6 +72,8 @@ type AbaRelatorio =
   | "vendas"
   | "congregacao";
 
+type FormaPagamentoFiltro = "" | "PIX" | "DINHEIRO" | "MISTO";
+
 type LinhaRelatorio = {
   id: string;
   data: string;
@@ -77,6 +83,8 @@ type LinhaRelatorio = {
   congregacao?: string;
   forma?: string;
   entrada: number;
+  entradaPix: number;
+  entradaDinheiro: number;
   saida: number;
   pendente?: number;
   status?: string;
@@ -97,11 +105,45 @@ function dentroDoPeriodo(data: string, inicio: string, fim: string) {
   return true;
 }
 
+function valoresPorForma(forma: string | undefined, total: number, valorPix?: number, valorDinheiro?: number) {
+  if (forma === "MISTO") {
+    return {
+      pix: Number(valorPix || 0),
+      dinheiro: Number(valorDinheiro || 0)
+    };
+  }
+
+  if (forma === "PIX") {
+    return { pix: total, dinheiro: 0 };
+  }
+
+  if (forma === "DINHEIRO") {
+    return { pix: 0, dinheiro: total };
+  }
+
+  return { pix: Number(valorPix || 0), dinheiro: Number(valorDinheiro || 0) };
+}
+
+function formaUniforme(valorPix: number, valorDinheiro: number) {
+  if (valorPix > 0 && valorDinheiro > 0) return "MISTO";
+  if (valorPix > 0) return "PIX";
+  if (valorDinheiro > 0) return "DINHEIRO";
+  return "";
+}
+
+function combinaFormaPagamento(linha: LinhaRelatorio, formaPagamento: FormaPagamentoFiltro) {
+  if (!formaPagamento) return true;
+  if (formaPagamento === "PIX") return linha.entradaPix > 0;
+  if (formaPagamento === "DINHEIRO") return linha.entradaDinheiro > 0;
+  return linha.forma === "MISTO";
+}
+
 export default function Relatorios() {
   const [aba, setAba] = useState<AbaRelatorio>("geral");
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [congregacaoId, setCongregacaoId] = useState("");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoFiltro>("");
 
   const [dados, setDados] = useState<DashboardData | null>(null);
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
@@ -150,47 +192,72 @@ export default function Relatorios() {
   const linhas = useMemo(() => {
     const lotePorId = new Map(lotes.map((lote) => [lote.id, lote]));
 
-    const linhasCaixa: LinhaRelatorio[] = caixa.map((item) => ({
-      id: `caixa-${item.id}`,
-      data: item.data,
-      origem: "Caixa",
-      descricao: item.descricao,
-      forma: item.formaPagamento,
-      entrada: item.tipo === "ENTRADA" ? Number(item.valor) : 0,
-      saida: item.tipo === "SAIDA" ? Number(item.valor) : 0,
-      status: item.tipo
-    }));
+    const linhasCaixa: LinhaRelatorio[] = caixa.map((item) => {
+      const valor = Number(item.valor || 0);
+      const pagamentos = item.tipo === "ENTRADA"
+        ? valoresPorForma(item.formaPagamento, valor, item.valorPix, item.valorDinheiro)
+        : { pix: 0, dinheiro: 0 };
 
-    const linhasFestividade: LinhaRelatorio[] = festividade.map((item) => ({
-      id: `festividade-${item.id}`,
-      data: item.dataPagamento,
-      origem: "Uniforme Festividade",
-      descricao: `${item.nomeMulher} - ${item.nomeUniforme}`,
-      congregacaoId: item.congregacaoId,
-      congregacao: item.nomeCongregacao,
-      forma: item.valorPix > 0 && item.valorDinheiro > 0 ? "MISTO" : item.valorPix > 0 ? "PIX" : "DINHEIRO",
-      entrada: Number(item.totalPago),
-      saida: 0,
-      pendente: Number(item.saldoPendente),
-      status: item.statusPagamento
-    }));
+      return {
+        id: `caixa-${item.id}`,
+        data: item.data,
+        origem: "Caixa",
+        descricao: item.descricao,
+        forma: item.formaPagamento,
+        entrada: item.tipo === "ENTRADA" ? valor : 0,
+        entradaPix: pagamentos.pix,
+        entradaDinheiro: pagamentos.dinheiro,
+        saida: item.tipo === "SAIDA" ? valor : 0,
+        status: item.tipo
+      };
+    });
 
-    const linhasPandeiro: LinhaRelatorio[] = pandeiro.map((item) => ({
-      id: `pandeiro-${item.id}`,
-      data: item.dataPagamento,
-      origem: "Uniforme Pandeiro",
-      descricao: `${item.nomeMulher} - ${item.nomeUniforme}`,
-      congregacaoId: item.congregacaoId,
-      congregacao: item.nomeCongregacao,
-      forma: item.valorPix > 0 && item.valorDinheiro > 0 ? "MISTO" : item.valorPix > 0 ? "PIX" : "DINHEIRO",
-      entrada: Number(item.totalPago),
-      saida: 0,
-      pendente: Number(item.saldoPendente),
-      status: item.statusPagamento
-    }));
+    const linhasFestividade: LinhaRelatorio[] = festividade.map((item) => {
+      const valorPix = Number(item.valorPix || 0);
+      const valorDinheiro = Number(item.valorDinheiro || 0);
+
+      return {
+        id: `festividade-${item.id}`,
+        data: item.dataPagamento,
+        origem: "Uniforme Festividade",
+        descricao: `${item.nomeMulher} - ${item.nomeUniforme}`,
+        congregacaoId: item.congregacaoId,
+        congregacao: item.nomeCongregacao,
+        forma: formaUniforme(valorPix, valorDinheiro),
+        entrada: Number(item.totalPago),
+        entradaPix: valorPix,
+        entradaDinheiro: valorDinheiro,
+        saida: 0,
+        pendente: Number(item.saldoPendente),
+        status: item.statusPagamento
+      };
+    });
+
+    const linhasPandeiro: LinhaRelatorio[] = pandeiro.map((item) => {
+      const valorPix = Number(item.valorPix || 0);
+      const valorDinheiro = Number(item.valorDinheiro || 0);
+
+      return {
+        id: `pandeiro-${item.id}`,
+        data: item.dataPagamento,
+        origem: "Uniforme Pandeiro",
+        descricao: `${item.nomeMulher} - ${item.nomeUniforme}`,
+        congregacaoId: item.congregacaoId,
+        congregacao: item.nomeCongregacao,
+        forma: formaUniforme(valorPix, valorDinheiro),
+        entrada: Number(item.totalPago),
+        entradaPix: valorPix,
+        entradaDinheiro: valorDinheiro,
+        saida: 0,
+        pendente: Number(item.saldoPendente),
+        status: item.statusPagamento
+      };
+    });
 
     const linhasVendas: LinhaRelatorio[] = vendas.map((item) => {
       const lote = lotePorId.get(item.loteVendaId);
+      const valorPago = Number(item.valorPago || 0);
+      const pagamentos = valoresPorForma(item.formaPagamento, valorPago, item.valorPix, item.valorDinheiro);
 
       return {
         id: `venda-${item.id}`,
@@ -198,7 +265,9 @@ export default function Relatorios() {
         origem: "Vendas",
         descricao: `${item.comprador} - ${item.produto} (${item.quantidade})`,
         forma: item.formaPagamento,
-        entrada: Number(item.valorPago),
+        entrada: valorPago,
+        entradaPix: pagamentos.pix,
+        entradaDinheiro: pagamentos.dinheiro,
         saida: 0,
         pendente: Number(item.pendente),
         status: item.statusPagamento
@@ -237,19 +306,28 @@ export default function Relatorios() {
 
     return resultado
       .filter((linha) => dentroDoPeriodo(linha.data, dataInicial, dataFinal))
-      .filter((linha) => !congregacaoId || String(linha.congregacaoId) === congregacaoId);
-  }, [aba, caixa, congregacaoId, dataFinal, dataInicial, festividade, lotes, pandeiro, vendas]);
+      .filter((linha) => !congregacaoId || String(linha.congregacaoId) === congregacaoId)
+      .filter((linha) => combinaFormaPagamento(linha, formaPagamento));
+  }, [aba, caixa, congregacaoId, dataFinal, dataInicial, festividade, formaPagamento, lotes, pandeiro, vendas]);
 
   const resumo = useMemo(() => ({
     entradas: linhas.reduce((total, linha) => total + linha.entrada, 0),
+    pix: linhas.reduce((total, linha) => total + linha.entradaPix, 0),
+    dinheiro: linhas.reduce((total, linha) => total + linha.entradaDinheiro, 0),
+    filtrado: formaPagamento === "PIX"
+      ? linhas.reduce((total, linha) => total + linha.entradaPix, 0)
+      : formaPagamento === "DINHEIRO"
+        ? linhas.reduce((total, linha) => total + linha.entradaDinheiro, 0)
+        : linhas.reduce((total, linha) => total + linha.entrada, 0),
     saidas: linhas.reduce((total, linha) => total + linha.saida, 0),
     pendente: linhas.reduce((total, linha) => total + Number(linha.pendente || 0), 0)
-  }), [linhas]);
+  }), [formaPagamento, linhas]);
 
   function limparFiltros() {
     setDataInicial("");
     setDataFinal("");
     setCongregacaoId("");
+    setFormaPagamento("");
   }
 
   function tituloRelatorio() {
@@ -333,6 +411,18 @@ export default function Relatorios() {
           </div>
         </div>
 
+        <div className="form-row-3">
+          <div className="form-group">
+            <label>Forma de Pagamento</label>
+            <select className="form-control" value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value as FormaPagamentoFiltro)}>
+              <option value="">Todas</option>
+              <option value="PIX">PIX</option>
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="MISTO">Misto</option>
+            </select>
+          </div>
+        </div>
+
         <button className="btn btn-outline" type="button" onClick={limparFiltros}>Limpar Filtros</button>
       </div>
 
@@ -375,6 +465,20 @@ export default function Relatorios() {
                 <div className="stat-label">Total Entradas</div>
                 <div className="stat-value small">{moeda.format(resumo.entradas)}</div>
               </div>
+              <div className="stat-card">
+                <div className="stat-label">Total PIX</div>
+                <div className="stat-value small">{moeda.format(resumo.pix)}</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Total Dinheiro</div>
+                <div className="stat-value small">{moeda.format(resumo.dinheiro)}</div>
+              </div>
+              {formaPagamento && (
+                <div className="stat-card green">
+                  <div className="stat-label">Total do Filtro</div>
+                  <div className="stat-value small">{moeda.format(resumo.filtrado)}</div>
+                </div>
+              )}
               <div className="stat-card red">
                 <div className="stat-label">Total Saídas</div>
                 <div className="stat-value small">{moeda.format(resumo.saidas)}</div>
@@ -399,6 +503,8 @@ export default function Relatorios() {
                     <th>Congregação</th>
                     <th>Forma</th>
                     <th>Entrada</th>
+                    <th>PIX</th>
+                    <th>Dinheiro</th>
                     <th>Saída</th>
                     <th>Pendente</th>
                     <th>Status</th>
@@ -413,6 +519,8 @@ export default function Relatorios() {
                       <td>{linha.congregacao || "-"}</td>
                       <td>{linha.forma || "-"}</td>
                       <td className="money positive">{linha.entrada ? moeda.format(linha.entrada) : "-"}</td>
+                      <td className="money positive">{linha.entradaPix ? moeda.format(linha.entradaPix) : "-"}</td>
+                      <td className="money positive">{linha.entradaDinheiro ? moeda.format(linha.entradaDinheiro) : "-"}</td>
                       <td className="money negative">{linha.saida ? moeda.format(linha.saida) : "-"}</td>
                       <td className="money negative">{linha.pendente ? moeda.format(linha.pendente) : "-"}</td>
                       <td>{linha.status || "-"}</td>

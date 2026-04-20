@@ -71,6 +71,7 @@ export default function Vendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [lotes, setLotes] = useState<LoteVenda[]>([]);
   const [loteSelecionado, setLoteSelecionado] = useState("");
+  const [criandoLote, setCriandoLote] = useState(false);
   const [editando, setEditando] = useState<Venda | null>(null);
   const [form, setForm] = useState({
     comprador: "",
@@ -82,6 +83,14 @@ export default function Vendas() {
     formaPagamento: "PIX",
     numeroParcelas: 1,
     parcelaAtual: 1,
+    observacao: ""
+  });
+  const [formLote, setFormLote] = useState({
+    produto: "",
+    categoria: "",
+    dataVenda: new Date().toISOString().slice(0, 10),
+    custoUnitario: 0,
+    valorUnitario: 0,
     observacao: ""
   });
 
@@ -146,6 +155,45 @@ export default function Vendas() {
       ...form,
       [e.target.name]: e.target.value
     });
+  }
+
+  function handleLoteChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setFormLote({
+      ...formLote,
+      [e.target.name]: e.target.value
+    });
+  }
+
+  function cancelarNovoLote() {
+    setCriandoLote(false);
+    setFormLote({
+      produto: "",
+      categoria: "",
+      dataVenda: new Date().toISOString().slice(0, 10),
+      custoUnitario: 0,
+      valorUnitario: 0,
+      observacao: ""
+    });
+  }
+
+  async function salvarLote(e: React.FormEvent) {
+    e.preventDefault();
+
+    try {
+      const response = await api.post("/lotes-venda", {
+        ...formLote,
+        custoUnitario: Number(formLote.custoUnitario || 0),
+        valorUnitario: Number(formLote.valorUnitario)
+      });
+
+      await carregar();
+      setLoteSelecionado(String(response.data.id));
+      cancelarNovoLote();
+      alert("Bloco cadastrado com sucesso");
+    } catch (error) {
+      console.error("Erro ao cadastrar bloco", error);
+      alert(mensagemErroApi(error, "cadastrar bloco"));
+    }
   }
 
   async function salvarEdicao(e: React.FormEvent) {
@@ -248,12 +296,53 @@ export default function Vendas() {
               ))}
             </select>
           </div>
-          <Link className="btn btn-primary" to="/nova-venda">
+          <button className="btn btn-primary" type="button" onClick={() => setCriandoLote(true)}>
             <i className="bi bi-plus-lg" aria-hidden="true"></i> novo Bloco
-          </Link>
+          </button>
           <button className="btn btn-outline" type="button">Editar Bloco</button>
           <button className="btn btn-danger" type="button">Excluir Bloco</button>
         </div>
+
+        {criandoLote && (
+          <form onSubmit={salvarLote} style={{ marginTop: 24 }}>
+            <div className="card-title">Novo Bloco</div>
+
+            <div className="form-row-3">
+              <div className="form-group">
+                <label>Produto *</label>
+                <input className="form-control" name="produto" placeholder="Ex: Camiseta, caneca, rifa" value={formLote.produto} onChange={handleLoteChange} />
+              </div>
+              <div className="form-group">
+                <label>Categoria *</label>
+                <input className="form-control" name="categoria" placeholder="Ex: Venda, evento, bazar" value={formLote.categoria} onChange={handleLoteChange} />
+              </div>
+              <div className="form-group">
+                <label>Data da Venda *</label>
+                <input className="form-control" name="dataVenda" type="date" value={formLote.dataVenda} onChange={handleLoteChange} />
+              </div>
+            </div>
+
+            <div className="form-row-3">
+              <div className="form-group">
+                <label>Custo Unitário (R$)</label>
+                <input className="form-control" name="custoUnitario" type="number" min="0" step="0.01" value={formLote.custoUnitario} onChange={handleLoteChange} />
+              </div>
+              <div className="form-group">
+                <label>Venda Unitária (R$) *</label>
+                <input className="form-control" name="valorUnitario" type="number" min="0.01" step="0.01" value={formLote.valorUnitario} onChange={handleLoteChange} />
+              </div>
+              <div className="form-group">
+                <label>Observação</label>
+                <input className="form-control" name="observacao" placeholder="Opcional" value={formLote.observacao} onChange={handleLoteChange} />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button className="btn btn-outline" type="button" onClick={cancelarNovoLote}>Cancelar</button>
+              <button className="btn btn-primary" type="submit">Salvar Bloco</button>
+            </div>
+          </form>
+        )}
 
         {loteAtual && (
           <div className="grid-4" style={{ marginTop: 24 }}>
