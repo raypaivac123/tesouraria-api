@@ -886,6 +886,10 @@ tbody td {
   padding-left: 18px;
 }
 
+.caixa-page .filter-control {
+  width: 240px;
+}
+
 @media (max-width: 900px) {
   .caixa-page .page-actions {
     align-items: stretch;

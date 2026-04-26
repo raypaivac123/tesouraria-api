@@ -53,6 +53,7 @@ export default function Caixa() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [busca, setBusca] = useState("");
   const [tipoFiltro, setTipoFiltro] = useState("");
+  const [formaPagamentoFiltro, setFormaPagamentoFiltro] = useState("");
   const [editando, setEditando] = useState<MovimentoCaixa | null>(null);
   const [form, setForm] = useState({
     data: "",
@@ -176,11 +177,12 @@ export default function Caixa() {
         ];
         const combinaBusca = !termoBusca || camposBusca.some((campo) => normalizarTexto(campo).includes(termoBusca));
         const combinaTipo = !tipoFiltro || item.tipo === tipoFiltro;
+        const combinaFormaPagamento = !formaPagamentoFiltro || item.formaPagamento === formaPagamentoFiltro;
 
-        return combinaBusca && combinaTipo;
+        return combinaBusca && combinaTipo && combinaFormaPagamento;
       })
       .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-  }, [busca, movimentos, tipoFiltro]);
+  }, [busca, formaPagamentoFiltro, movimentos, tipoFiltro]);
 
   const resumo = useMemo(() => {
     const entradas = movimentosFiltrados
@@ -229,6 +231,12 @@ export default function Caixa() {
               <option value="">Todos os tipos</option>
               <option value="ENTRADA">Entradas</option>
               <option value="SAIDA">Saidas</option>
+            </select>
+            <select className="form-control filter-control" value={formaPagamentoFiltro} onChange={(e) => setFormaPagamentoFiltro(e.target.value)}>
+              <option value="">Todas as formas</option>
+              <option value="PIX">PIX</option>
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="MISTO">Misto</option>
             </select>
           </div>
           <Link className="btn btn-primary" to="/novo-movimento">
