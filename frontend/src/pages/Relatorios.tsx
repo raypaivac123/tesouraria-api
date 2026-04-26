@@ -134,6 +134,18 @@ function valorSaidaPorModo(linha: LinhaRelatorio, modo: FormaPagamentoFiltro) {
   return linha.saida;
 }
 
+function valorPixExibido(linha: LinhaRelatorio, modo: FormaPagamentoFiltro) {
+  if (modo === "DINHEIRO") return 0;
+  if (modo === "MISTO") return linha.forma === "MISTO" ? linha.pix : 0;
+  return linha.pix;
+}
+
+function valorDinheiroExibido(linha: LinhaRelatorio, modo: FormaPagamentoFiltro) {
+  if (modo === "PIX") return 0;
+  if (modo === "MISTO") return linha.forma === "MISTO" ? linha.dinheiro : 0;
+  return linha.dinheiro;
+}
+
 export default function Relatorios() {
   const [aba, setAba] = useState<AbaRelatorio>("geral");
   const [dataInicial, setDataInicial] = useState("");
@@ -499,28 +511,6 @@ export default function Relatorios() {
                 <div className="stat-label">Saldo do Periodo</div>
                 <div className="stat-value small">{moeda.format(resumo.saldo)}</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-label">Movimentado em PIX</div>
-                <div className="stat-value small">{moeda.format(resumo.pix)}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Movimentado em Dinheiro</div>
-                <div className="stat-value small">{moeda.format(resumo.dinheiro)}</div>
-              </div>
-              {formaPagamento && (
-                <div className="stat-card green">
-                  <div className="stat-label">Total do Filtro</div>
-                  <div className="stat-value small">{moeda.format(resumo.filtrado)}</div>
-                </div>
-              )}
-              <div className="stat-card">
-                <div className="stat-label">Total Movimentado</div>
-                <div className="stat-value small">{moeda.format(resumo.movimentado)}</div>
-              </div>
-              <div className="stat-card orange">
-                <div className="stat-label">Pendente</div>
-                <div className="stat-value small">{moeda.format(resumo.pendente)}</div>
-              </div>
             </div>
 
             {aba === "geral" && (
@@ -586,8 +576,8 @@ export default function Relatorios() {
                       <td>{linha.forma || "-"}</td>
                       <td>{linha.tipo}</td>
                       <td className="money positive">{valorEntradaPorModo(linha, modoResumo) ? moeda.format(valorEntradaPorModo(linha, modoResumo)) : "-"}</td>
-                      <td className="money positive">{linha.pix ? moeda.format(linha.pix) : "-"}</td>
-                      <td className="money positive">{linha.dinheiro ? moeda.format(linha.dinheiro) : "-"}</td>
+                      <td className="money positive">{valorPixExibido(linha, modoResumo) ? moeda.format(valorPixExibido(linha, modoResumo)) : "-"}</td>
+                      <td className="money positive">{valorDinheiroExibido(linha, modoResumo) ? moeda.format(valorDinheiroExibido(linha, modoResumo)) : "-"}</td>
                       <td className="money negative">{valorSaidaPorModo(linha, modoResumo) ? moeda.format(valorSaidaPorModo(linha, modoResumo)) : "-"}</td>
                       <td className="money negative">{linha.pendente ? moeda.format(linha.pendente) : "-"}</td>
                       <td>{linha.status || "-"}</td>
