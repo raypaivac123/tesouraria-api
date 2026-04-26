@@ -35,8 +35,8 @@ export default function NovoMovimento() {
   return (
     <Layout>
       <div className="page-header">
-        <h2>Nova Movimentação</h2>
-        <p>Registre uma entrada ou saída financeira</p>
+        <h2>Nova Movimentacao</h2>
+        <p>Registre uma entrada ou saida financeira</p>
       </div>
 
       <div className="card" style={{ maxWidth: 620 }}>
@@ -46,7 +46,7 @@ export default function NovoMovimento() {
               <label>Tipo *</label>
               <select className="form-control" name="tipo" value={form.tipo} onChange={handleChange}>
                 <option value="ENTRADA">Entrada</option>
-                <option value="SAIDA">Saída</option>
+                <option value="SAIDA">Saida</option>
               </select>
             </div>
             <div className="form-group">
@@ -56,8 +56,8 @@ export default function NovoMovimento() {
           </div>
 
           <div className="form-group">
-            <label>Descrição *</label>
-            <input className="form-control" name="descricao" placeholder="Descrição da movimentação" value={form.descricao} onChange={handleChange} />
+            <label>Descricao *</label>
+            <input className="form-control" name="descricao" placeholder="Descricao da movimentacao" value={form.descricao} onChange={handleChange} />
           </div>
 
           <div className="form-row">
@@ -70,7 +70,7 @@ export default function NovoMovimento() {
               <select className="form-control" name="formaPagamento" value={form.formaPagamento} onChange={handleChange}>
                 <option value="PIX">PIX</option>
                 <option value="DINHEIRO">Dinheiro</option>
-                <option value="CARTAO">Cartão</option>
+                <option value="CARTAO">Cartao</option>
               </select>
             </div>
           </div>
