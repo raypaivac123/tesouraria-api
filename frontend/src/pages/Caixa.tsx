@@ -52,6 +52,8 @@ function mensagemErroApi(error: unknown, acao: string) {
 export default function Caixa() {
   const [movimentos, setMovimentos] = useState<MovimentoCaixa[]>([]);
   const [busca, setBusca] = useState("");
+  const [dataInicialFiltro, setDataInicialFiltro] = useState("");
+  const [dataFinalFiltro, setDataFinalFiltro] = useState("");
   const [tipoFiltro, setTipoFiltro] = useState("");
   const [formaPagamentoFiltro, setFormaPagamentoFiltro] = useState("");
   const [editando, setEditando] = useState<MovimentoCaixa | null>(null);
@@ -176,13 +178,15 @@ export default function Caixa() {
           moeda.format(item.valor)
         ];
         const combinaBusca = !termoBusca || camposBusca.some((campo) => normalizarTexto(campo).includes(termoBusca));
+        const combinaDataInicial = !dataInicialFiltro || (item.data || "") >= dataInicialFiltro;
+        const combinaDataFinal = !dataFinalFiltro || (item.data || "") <= dataFinalFiltro;
         const combinaTipo = !tipoFiltro || item.tipo === tipoFiltro;
         const combinaFormaPagamento = !formaPagamentoFiltro || item.formaPagamento === formaPagamentoFiltro;
 
-        return combinaBusca && combinaTipo && combinaFormaPagamento;
+        return combinaBusca && combinaDataInicial && combinaDataFinal && combinaTipo && combinaFormaPagamento;
       })
       .sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-  }, [busca, formaPagamentoFiltro, movimentos, tipoFiltro]);
+  }, [busca, dataFinalFiltro, dataInicialFiltro, formaPagamentoFiltro, movimentos, tipoFiltro]);
 
   const resumo = useMemo(() => {
     const entradas = movimentosFiltrados
@@ -227,6 +231,8 @@ export default function Caixa() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
+            <input className="form-control filter-control" type="date" value={dataInicialFiltro} onChange={(e) => setDataInicialFiltro(e.target.value)} />
+            <input className="form-control filter-control" type="date" value={dataFinalFiltro} onChange={(e) => setDataFinalFiltro(e.target.value)} />
             <select className="form-control filter-control" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}>
               <option value="">Todos os tipos</option>
               <option value="ENTRADA">Entradas</option>

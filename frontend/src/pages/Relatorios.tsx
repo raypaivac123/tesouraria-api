@@ -10,11 +10,6 @@ type DashboardData = {
   totalUniformePandeiro: number;
 };
 
-type Congregacao = {
-  id: number;
-  nome: string;
-};
-
 type MovimentoCaixa = {
   id: number;
   data: string;
@@ -25,41 +20,6 @@ type MovimentoCaixa = {
   valorPix?: number;
   valorDinheiro?: number;
   valor: number;
-};
-
-type Venda = {
-  id: number;
-  comprador: string;
-  loteVendaId: number;
-  produto: string;
-  quantidade: number;
-  total: number;
-  valorPago: number;
-  valorPix?: number;
-  valorDinheiro?: number;
-  pendente: number;
-  formaPagamento: string;
-  statusPagamento: string;
-};
-
-type LoteVenda = {
-  id: number;
-  dataVenda: string;
-};
-
-type Uniforme = {
-  id: number;
-  nomeMulher: string;
-  congregacaoId: number;
-  nomeCongregacao: string;
-  nomeUniforme: string;
-  valorUniforme: number;
-  valorPix: number;
-  valorDinheiro: number;
-  totalPago: number;
-  saldoPendente: number;
-  statusPagamento: string;
-  dataPagamento: string;
 };
 
 type AbaRelatorio =
@@ -126,13 +86,6 @@ function valoresPorForma(forma: string | undefined, total: number, valorPix?: nu
   return { pix: Number(valorPix || 0), dinheiro: Number(valorDinheiro || 0) };
 }
 
-function formaUniforme(valorPix: number, valorDinheiro: number) {
-  if (valorPix > 0 && valorDinheiro > 0) return "MISTO";
-  if (valorPix > 0) return "PIX";
-  if (valorDinheiro > 0) return "DINHEIRO";
-  return "";
-}
-
 function combinaFormaPagamento(
   linha: Pick<LinhaRelatorio, "forma" | "pix" | "dinheiro">,
   formaPagamento: FormaPagamentoFiltro
@@ -151,52 +104,39 @@ function normalizarTexto(valor?: string | number | null) {
     .trim();
 }
 
+function origemCaixaPorCategoria(categoria?: string) {
+  if (categoria === "venda") return "Vendas";
+  if (categoria === "uniforme_festividade") return "Uniforme Festividade";
+  if (categoria === "uniforme_pandeiro") return "Uniforme Pandeiro";
+  return "Caixa";
+}
+
 export default function Relatorios() {
   const [aba, setAba] = useState<AbaRelatorio>("geral");
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [busca, setBusca] = useState("");
-  const [congregacaoId, setCongregacaoId] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [tipoMovimento, setTipoMovimento] = useState<"" | "ENTRADA" | "SAIDA">("");
   const [origemFiltro, setOrigemFiltro] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoFiltro>("");
 
   const [dados, setDados] = useState<DashboardData | null>(null);
-  const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
   const [caixa, setCaixa] = useState<MovimentoCaixa[]>([]);
-  const [vendas, setVendas] = useState<Venda[]>([]);
-  const [lotes, setLotes] = useState<LoteVenda[]>([]);
-  const [festividade, setFestividade] = useState<Uniforme[]>([]);
-  const [pandeiro, setPandeiro] = useState<Uniforme[]>([]);
 
   useEffect(() => {
     async function carregar() {
       try {
         const [
           dashboardResponse,
-          congregacoesResponse,
-          caixaResponse,
-          vendasResponse,
-          lotesResponse,
-          festividadeResponse,
-          pandeiroResponse
+          caixaResponse
         ] = await Promise.all([
           api.get("/dashboard"),
-          api.get("/congregacoes"),
-          api.get("/caixa"),
-          api.get("/vendas"),
-          api.get("/lotes-venda"),
-          api.get("/uniforme-festividade"),
-          api.get("/uniforme-pandeiro")
+          api.get("/caixa")
         ]);
 
         setDados(dashboardResponse.data);
-        setCongregacoes(congregacoesResponse.data);
         setCaixa(caixaResponse.data);
-        setVendas(vendasResponse.data);
-        setLotes(lotesResponse.data);
-        setFestividade(festividadeResponse.data);
-        setPandeiro(pandeiroResponse.data);
       } catch (error) {
         console.error("Erro ao carregar relatórios", error);
       }
@@ -206,8 +146,6 @@ export default function Relatorios() {
   }, []);
 
   const linhasBase = useMemo(() => {
-    const lotePorId = new Map(lotes.map((lote) => [lote.id, lote]));
-
     const linhasCaixa: LinhaRelatorio[] = caixa.map((item) => {
       const valor = Number(item.valor || 0);
       const pagamentos = valoresPorForma(item.formaPagamento, valor, item.valorPix, item.valorDinheiro);
@@ -215,7 +153,7 @@ export default function Relatorios() {
       return {
         id: `caixa-${item.id}`,
         data: item.data,
-        origem: "Caixa",
+        origem: origemCaixaPorCategoria(item.categoria),
         descricao: item.descricao,
         categoria: item.categoria,
         forma: item.formaPagamento,
@@ -228,79 +166,14 @@ export default function Relatorios() {
       };
     });
 
-    const linhasFestividade: LinhaRelatorio[] = festividade.map((item) => {
-      const valorPix = Number(item.valorPix || 0);
-      const valorDinheiro = Number(item.valorDinheiro || 0);
-
-      return {
-        id: `festividade-${item.id}`,
-        data: item.dataPagamento,
-        origem: "Uniforme Festividade",
-        descricao: `${item.nomeMulher} - ${item.nomeUniforme}`,
-        congregacaoId: item.congregacaoId,
-        congregacao: item.nomeCongregacao,
-        forma: formaUniforme(valorPix, valorDinheiro),
-        tipo: "ENTRADA",
-        entrada: Number(item.totalPago),
-        pix: valorPix,
-        dinheiro: valorDinheiro,
-        saida: 0,
-        pendente: Number(item.saldoPendente),
-        status: item.statusPagamento
-      };
-    });
-
-    const linhasPandeiro: LinhaRelatorio[] = pandeiro.map((item) => {
-      const valorPix = Number(item.valorPix || 0);
-      const valorDinheiro = Number(item.valorDinheiro || 0);
-
-      return {
-        id: `pandeiro-${item.id}`,
-        data: item.dataPagamento,
-        origem: "Uniforme Pandeiro",
-        descricao: `${item.nomeMulher} - ${item.nomeUniforme}`,
-        congregacaoId: item.congregacaoId,
-        congregacao: item.nomeCongregacao,
-        forma: formaUniforme(valorPix, valorDinheiro),
-        tipo: "ENTRADA",
-        entrada: Number(item.totalPago),
-        pix: valorPix,
-        dinheiro: valorDinheiro,
-        saida: 0,
-        pendente: Number(item.saldoPendente),
-        status: item.statusPagamento
-      };
-    });
-
-    const linhasVendas: LinhaRelatorio[] = vendas.map((item) => {
-      const lote = lotePorId.get(item.loteVendaId);
-      const valorPago = Number(item.valorPago || 0);
-      const pagamentos = valoresPorForma(item.formaPagamento, valorPago, item.valorPix, item.valorDinheiro);
-
-      return {
-        id: `venda-${item.id}`,
-        data: lote?.dataVenda || "",
-        origem: "Vendas",
-        descricao: `${item.comprador} - ${item.produto} (${item.quantidade})`,
-        forma: item.formaPagamento,
-        tipo: "ENTRADA",
-        entrada: valorPago,
-        pix: pagamentos.pix,
-        dinheiro: pagamentos.dinheiro,
-        saida: 0,
-        pendente: Number(item.pendente),
-        status: item.statusPagamento
-      };
-    });
-
-    let resultado = [...linhasCaixa, ...linhasFestividade, ...linhasPandeiro, ...linhasVendas];
+    let resultado = linhasCaixa;
 
     if (aba === "pix") {
-      resultado = resultado.filter((linha) => linha.forma === "PIX" || linha.forma === "MISTO");
+      resultado = linhasCaixa.filter((linha) => linha.forma === "PIX" || linha.forma === "MISTO");
     }
 
     if (aba === "dinheiro") {
-      resultado = resultado.filter((linha) => linha.forma === "DINHEIRO" || linha.forma === "MISTO");
+      resultado = linhasCaixa.filter((linha) => linha.forma === "DINHEIRO" || linha.forma === "MISTO");
     }
 
     if (aba === "saidas") {
@@ -308,34 +181,40 @@ export default function Relatorios() {
     }
 
     if (aba === "festividade") {
-      resultado = linhasFestividade;
+      resultado = linhasCaixa.filter((linha) => linha.categoria === "uniforme_festividade");
     }
 
     if (aba === "pandeiro") {
-      resultado = linhasPandeiro;
+      resultado = linhasCaixa.filter((linha) => linha.categoria === "uniforme_pandeiro");
     }
 
     if (aba === "vendas") {
-      resultado = linhasVendas;
+      resultado = linhasCaixa.filter((linha) => linha.categoria === "venda");
     }
 
     if (aba === "congregacao") {
-      resultado = [...linhasFestividade, ...linhasPandeiro];
+      resultado = linhasCaixa.filter((linha) =>
+        linha.categoria === "uniforme_festividade" || linha.categoria === "uniforme_pandeiro"
+      );
     }
 
     return resultado.sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-  }, [aba, caixa, festividade, lotes, pandeiro, vendas]);
+  }, [aba, caixa]);
 
   const origensDisponiveis = useMemo(() => (
     Array.from(new Set(linhasBase.map((linha) => linha.origem))).sort((a, b) => a.localeCompare(b))
   ), [linhasBase]);
+
+  const categoriasDisponiveis = useMemo(() => (
+    Array.from(new Set(caixa.map((item) => item.categoria).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  ), [caixa]);
 
   const linhas = useMemo(() => {
     const termoBusca = normalizarTexto(busca);
 
     return linhasBase
       .filter((linha) => dentroDoPeriodo(linha.data, dataInicial, dataFinal))
-      .filter((linha) => !congregacaoId || String(linha.congregacaoId) === congregacaoId)
+      .filter((linha) => !categoriaFiltro || linha.categoria === categoriaFiltro)
       .filter((linha) => !tipoMovimento || linha.tipo === tipoMovimento)
       .filter((linha) => !origemFiltro || linha.origem === origemFiltro)
       .filter((linha) => combinaFormaPagamento(linha, formaPagamento))
@@ -353,7 +232,7 @@ export default function Relatorios() {
           formatarData(linha.data)
         ].some((campo) => normalizarTexto(campo).includes(termoBusca));
       });
-  }, [busca, congregacaoId, dataFinal, dataInicial, formaPagamento, linhasBase, origemFiltro, tipoMovimento]);
+  }, [busca, categoriaFiltro, dataFinal, dataInicial, formaPagamento, linhasBase, origemFiltro, tipoMovimento]);
 
   const resumo = useMemo(() => ({
     entradas: linhas.reduce((total, linha) => total + linha.entrada, 0),
@@ -422,7 +301,7 @@ export default function Relatorios() {
     setDataInicial("");
     setDataFinal("");
     setBusca("");
-    setCongregacaoId("");
+    setCategoriaFiltro("");
     setTipoMovimento("");
     setOrigemFiltro("");
     setFormaPagamento("");
@@ -437,7 +316,7 @@ export default function Relatorios() {
       festividade: "Relatório Uniforme Festividade",
       pandeiro: "Relatório Uniforme Pandeiro",
       vendas: "Relatório de Vendas",
-      congregacao: "Relatório por Congregação"
+      congregacao: "Relatório de Uniformes"
     };
 
     return titulos[aba];
@@ -452,8 +331,7 @@ export default function Relatorios() {
     const response = await api.get(`/relatorios/financeiro/${tipo}`, {
       params: {
         dataInicial,
-        dataFinal,
-        congregacaoId: congregacaoId || undefined
+        dataFinal
       },
       responseType: "blob"
     });
@@ -503,11 +381,11 @@ export default function Relatorios() {
             <input className="form-control" type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Congregação</label>
-            <select className="form-control" value={congregacaoId} onChange={(e) => setCongregacaoId(e.target.value)}>
+            <label>Categoria</label>
+            <select className="form-control" value={categoriaFiltro} onChange={(e) => setCategoriaFiltro(e.target.value)}>
               <option value="">Todas</option>
-              {congregacoes.map((item) => (
-                <option key={item.id} value={item.id}>{item.nome}</option>
+              {categoriasDisponiveis.map((categoria) => (
+                <option key={categoria} value={categoria}>{categoria}</option>
               ))}
             </select>
           </div>
@@ -568,7 +446,7 @@ export default function Relatorios() {
           <i className="bi bi-cart3" aria-hidden="true"></i> Vendas
         </button>
         <button className={`tab-btn ${aba === "congregacao" ? "active" : ""}`} type="button" onClick={() => setAba("congregacao")}>
-          <i className="bi bi-building" aria-hidden="true"></i> Por Congregação
+          <i className="bi bi-bag-check" aria-hidden="true"></i> Uniformes
         </button>
       </div>
 
@@ -658,7 +536,7 @@ export default function Relatorios() {
                     <th>Data</th>
                     <th>Origem</th>
                     <th>Descrição</th>
-                    <th>Congregação</th>
+                    <th>Categoria</th>
                     <th>Forma</th>
                     <th>Tipo</th>
                     <th>Entrada</th>
@@ -675,7 +553,7 @@ export default function Relatorios() {
                       <td>{formatarData(linha.data)}</td>
                       <td>{linha.origem}</td>
                       <td>{linha.descricao}</td>
-                      <td>{linha.congregacao || "-"}</td>
+                      <td>{linha.categoria || "-"}</td>
                       <td>{linha.forma || "-"}</td>
                       <td>{linha.tipo}</td>
                       <td className="money positive">{linha.entrada ? moeda.format(linha.entrada) : "-"}</td>
