@@ -79,12 +79,14 @@ type LinhaRelatorio = {
   data: string;
   origem: string;
   descricao: string;
+  categoria?: string;
   congregacaoId?: number;
   congregacao?: string;
   forma?: string;
+  tipo: "ENTRADA" | "SAIDA";
   entrada: number;
-  entradaPix: number;
-  entradaDinheiro: number;
+  pix: number;
+  dinheiro: number;
   saida: number;
   pendente?: number;
   status?: string;
@@ -132,20 +134,31 @@ function formaUniforme(valorPix: number, valorDinheiro: number) {
 }
 
 function combinaFormaPagamento(
-  linha: Pick<LinhaRelatorio, "forma" | "entradaPix" | "entradaDinheiro">,
+  linha: Pick<LinhaRelatorio, "forma" | "pix" | "dinheiro">,
   formaPagamento: FormaPagamentoFiltro
 ) {
   if (!formaPagamento) return true;
-  if (formaPagamento === "PIX") return linha.entradaPix > 0;
-  if (formaPagamento === "DINHEIRO") return linha.entradaDinheiro > 0;
+  if (formaPagamento === "PIX") return linha.pix > 0;
+  if (formaPagamento === "DINHEIRO") return linha.dinheiro > 0;
   return linha.forma === "MISTO";
+}
+
+function normalizarTexto(valor?: string | number | null) {
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 export default function Relatorios() {
   const [aba, setAba] = useState<AbaRelatorio>("geral");
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
+  const [busca, setBusca] = useState("");
   const [congregacaoId, setCongregacaoId] = useState("");
+  const [tipoMovimento, setTipoMovimento] = useState<"" | "ENTRADA" | "SAIDA">("");
+  const [origemFiltro, setOrigemFiltro] = useState("");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoFiltro>("");
 
   const [dados, setDados] = useState<DashboardData | null>(null);
@@ -192,24 +205,24 @@ export default function Relatorios() {
     carregar();
   }, []);
 
-  const linhas = useMemo(() => {
+  const linhasBase = useMemo(() => {
     const lotePorId = new Map(lotes.map((lote) => [lote.id, lote]));
 
     const linhasCaixa: LinhaRelatorio[] = caixa.map((item) => {
       const valor = Number(item.valor || 0);
-      const pagamentos = item.tipo === "ENTRADA"
-        ? valoresPorForma(item.formaPagamento, valor, item.valorPix, item.valorDinheiro)
-        : { pix: 0, dinheiro: 0 };
+      const pagamentos = valoresPorForma(item.formaPagamento, valor, item.valorPix, item.valorDinheiro);
 
       return {
         id: `caixa-${item.id}`,
         data: item.data,
         origem: "Caixa",
         descricao: item.descricao,
+        categoria: item.categoria,
         forma: item.formaPagamento,
+        tipo: item.tipo === "SAIDA" ? "SAIDA" : "ENTRADA",
         entrada: item.tipo === "ENTRADA" ? valor : 0,
-        entradaPix: pagamentos.pix,
-        entradaDinheiro: pagamentos.dinheiro,
+        pix: pagamentos.pix,
+        dinheiro: pagamentos.dinheiro,
         saida: item.tipo === "SAIDA" ? valor : 0,
         status: item.tipo
       };
@@ -227,9 +240,10 @@ export default function Relatorios() {
         congregacaoId: item.congregacaoId,
         congregacao: item.nomeCongregacao,
         forma: formaUniforme(valorPix, valorDinheiro),
+        tipo: "ENTRADA",
         entrada: Number(item.totalPago),
-        entradaPix: valorPix,
-        entradaDinheiro: valorDinheiro,
+        pix: valorPix,
+        dinheiro: valorDinheiro,
         saida: 0,
         pendente: Number(item.saldoPendente),
         status: item.statusPagamento
@@ -248,9 +262,10 @@ export default function Relatorios() {
         congregacaoId: item.congregacaoId,
         congregacao: item.nomeCongregacao,
         forma: formaUniforme(valorPix, valorDinheiro),
+        tipo: "ENTRADA",
         entrada: Number(item.totalPago),
-        entradaPix: valorPix,
-        entradaDinheiro: valorDinheiro,
+        pix: valorPix,
+        dinheiro: valorDinheiro,
         saida: 0,
         pendente: Number(item.saldoPendente),
         status: item.statusPagamento
@@ -268,9 +283,10 @@ export default function Relatorios() {
         origem: "Vendas",
         descricao: `${item.comprador} - ${item.produto} (${item.quantidade})`,
         forma: item.formaPagamento,
+        tipo: "ENTRADA",
         entrada: valorPago,
-        entradaPix: pagamentos.pix,
-        entradaDinheiro: pagamentos.dinheiro,
+        pix: pagamentos.pix,
+        dinheiro: pagamentos.dinheiro,
         saida: 0,
         pendente: Number(item.pendente),
         status: item.statusPagamento
@@ -307,30 +323,57 @@ export default function Relatorios() {
       resultado = [...linhasFestividade, ...linhasPandeiro];
     }
 
-    return resultado
+    return resultado.sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  }, [aba, caixa, festividade, lotes, pandeiro, vendas]);
+
+  const origensDisponiveis = useMemo(() => (
+    Array.from(new Set(linhasBase.map((linha) => linha.origem))).sort((a, b) => a.localeCompare(b))
+  ), [linhasBase]);
+
+  const linhas = useMemo(() => {
+    const termoBusca = normalizarTexto(busca);
+
+    return linhasBase
       .filter((linha) => dentroDoPeriodo(linha.data, dataInicial, dataFinal))
       .filter((linha) => !congregacaoId || String(linha.congregacaoId) === congregacaoId)
-      .filter((linha) => combinaFormaPagamento(linha, formaPagamento));
-  }, [aba, caixa, congregacaoId, dataFinal, dataInicial, festividade, formaPagamento, lotes, pandeiro, vendas]);
+      .filter((linha) => !tipoMovimento || linha.tipo === tipoMovimento)
+      .filter((linha) => !origemFiltro || linha.origem === origemFiltro)
+      .filter((linha) => combinaFormaPagamento(linha, formaPagamento))
+      .filter((linha) => {
+        if (!termoBusca) return true;
+
+        return [
+          linha.descricao,
+          linha.origem,
+          linha.categoria,
+          linha.congregacao,
+          linha.forma,
+          linha.status,
+          linha.tipo,
+          formatarData(linha.data)
+        ].some((campo) => normalizarTexto(campo).includes(termoBusca));
+      });
+  }, [busca, congregacaoId, dataFinal, dataInicial, formaPagamento, linhasBase, origemFiltro, tipoMovimento]);
 
   const resumo = useMemo(() => ({
     entradas: linhas.reduce((total, linha) => total + linha.entrada, 0),
-    pix: linhas.reduce((total, linha) => total + linha.entradaPix, 0),
-    dinheiro: linhas.reduce((total, linha) => total + linha.entradaDinheiro, 0),
+    pix: linhas.reduce((total, linha) => total + linha.pix, 0),
+    dinheiro: linhas.reduce((total, linha) => total + linha.dinheiro, 0),
     filtrado: formaPagamento === "PIX"
-      ? linhas.reduce((total, linha) => total + linha.entradaPix, 0)
+      ? linhas.reduce((total, linha) => total + linha.pix, 0)
       : formaPagamento === "DINHEIRO"
-        ? linhas.reduce((total, linha) => total + linha.entradaDinheiro, 0)
-        : linhas.reduce((total, linha) => total + linha.entrada, 0),
+        ? linhas.reduce((total, linha) => total + linha.dinheiro, 0)
+        : linhas.reduce((total, linha) => total + linha.pix + linha.dinheiro, 0),
     saidas: linhas.reduce((total, linha) => total + linha.saida, 0),
-    pendente: linhas.reduce((total, linha) => total + Number(linha.pendente || 0), 0)
+    pendente: linhas.reduce((total, linha) => total + Number(linha.pendente || 0), 0),
+    movimentado: linhas.reduce((total, linha) => total + linha.entrada + linha.saida, 0),
+    saldo: linhas.reduce((total, linha) => total + linha.entrada - linha.saida, 0)
   }), [formaPagamento, linhas]);
 
-  const entradasPorCategoria = useMemo(() => {
-    const categorias = new Map<string, number>();
+  const resumoPorCategoria = useMemo(() => {
+    const categorias = new Map<string, { entradas: number; saidas: number }>();
 
     caixa
-      .filter((item) => item.tipo === "ENTRADA")
       .map((item) => {
         const valor = Number(item.valor || 0);
         const pagamentos = valoresPorForma(item.formaPagamento, valor, item.valorPix, item.valorDinheiro);
@@ -338,33 +381,50 @@ export default function Relatorios() {
         return {
           categoria: item.categoria || "Sem categoria",
           data: item.data,
+          tipo: item.tipo,
           forma: item.formaPagamento,
           entrada: valor,
-          entradaPix: pagamentos.pix,
-          entradaDinheiro: pagamentos.dinheiro
+          pix: pagamentos.pix,
+          dinheiro: pagamentos.dinheiro
         };
       })
       .filter((item) => dentroDoPeriodo(item.data, dataInicial, dataFinal))
       .filter((item) => combinaFormaPagamento(item, formaPagamento))
+      .filter((item) => !tipoMovimento || item.tipo === tipoMovimento)
       .forEach((item) => {
         const valor = formaPagamento === "PIX"
-          ? item.entradaPix
+          ? item.pix
           : formaPagamento === "DINHEIRO"
-            ? item.entradaDinheiro
+            ? item.dinheiro
             : item.entrada;
+        const atual = categorias.get(item.categoria) || { entradas: 0, saidas: 0 };
 
-        categorias.set(item.categoria, (categorias.get(item.categoria) || 0) + valor);
+        if (item.tipo === "SAIDA") {
+          atual.saidas += valor;
+        } else {
+          atual.entradas += valor;
+        }
+
+        categorias.set(item.categoria, atual);
       });
 
     return Array.from(categorias.entries())
-      .map(([categoria, total]) => ({ categoria, total }))
-      .sort((a, b) => b.total - a.total);
-  }, [caixa, dataFinal, dataInicial, formaPagamento]);
+      .map(([categoria, total]) => ({
+        categoria,
+        entradas: total.entradas,
+        saidas: total.saidas,
+        saldo: total.entradas - total.saidas
+      }))
+      .sort((a, b) => b.saldo - a.saldo);
+  }, [caixa, dataFinal, dataInicial, formaPagamento, tipoMovimento]);
 
   function limparFiltros() {
     setDataInicial("");
     setDataFinal("");
+    setBusca("");
     setCongregacaoId("");
+    setTipoMovimento("");
+    setOrigemFiltro("");
     setFormaPagamento("");
   }
 
@@ -431,6 +491,10 @@ export default function Relatorios() {
       <div className="card no-print" style={{ marginBottom: 30 }}>
         <div className="form-row-3">
           <div className="form-group">
+            <label>Busca</label>
+            <input className="form-control" type="text" placeholder="Buscar descricao, categoria, origem..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+          </div>
+          <div className="form-group">
             <label>Data Inicial</label>
             <input className="form-control" type="date" value={dataInicial} onChange={(e) => setDataInicial(e.target.value)} />
           </div>
@@ -450,6 +514,23 @@ export default function Relatorios() {
         </div>
 
         <div className="form-row-3">
+          <div className="form-group">
+            <label>Tipo de Movimento</label>
+            <select className="form-control" value={tipoMovimento} onChange={(e) => setTipoMovimento(e.target.value as "" | "ENTRADA" | "SAIDA")}>
+              <option value="">Todos</option>
+              <option value="ENTRADA">Entradas</option>
+              <option value="SAIDA">Saidas</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Origem</label>
+            <select className="form-control" value={origemFiltro} onChange={(e) => setOrigemFiltro(e.target.value)}>
+              <option value="">Todas</option>
+              {origensDisponiveis.map((origem) => (
+                <option key={origem} value={origem}>{origem}</option>
+              ))}
+            </select>
+          </div>
           <div className="form-group">
             <label>Forma de Pagamento</label>
             <select className="form-control" value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value as FormaPagamentoFiltro)}>
@@ -503,12 +584,20 @@ export default function Relatorios() {
                 <div className="stat-label">Total Entradas</div>
                 <div className="stat-value small">{moeda.format(resumo.entradas)}</div>
               </div>
+              <div className="stat-card red">
+                <div className="stat-label">Total Saidas</div>
+                <div className="stat-value small">{moeda.format(resumo.saidas)}</div>
+              </div>
               <div className="stat-card">
-                <div className="stat-label">Total PIX</div>
+                <div className="stat-label">Saldo do Periodo</div>
+                <div className="stat-value small">{moeda.format(resumo.saldo)}</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Movimentado em PIX</div>
                 <div className="stat-value small">{moeda.format(resumo.pix)}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-label">Total Dinheiro</div>
+                <div className="stat-label">Movimentado em Dinheiro</div>
                 <div className="stat-value small">{moeda.format(resumo.dinheiro)}</div>
               </div>
               {formaPagamento && (
@@ -517,13 +606,9 @@ export default function Relatorios() {
                   <div className="stat-value small">{moeda.format(resumo.filtrado)}</div>
                 </div>
               )}
-              <div className="stat-card red">
-                <div className="stat-label">Total Saídas</div>
-                <div className="stat-value small">{moeda.format(resumo.saidas)}</div>
-              </div>
               <div className="stat-card">
-                <div className="stat-label">Saldo Final</div>
-                <div className="stat-value small">{moeda.format(resumo.entradas - resumo.saidas)}</div>
+                <div className="stat-label">Total Movimentado</div>
+                <div className="stat-value small">{moeda.format(resumo.movimentado)}</div>
               </div>
               <div className="stat-card orange">
                 <div className="stat-label">Pendente</div>
@@ -533,22 +618,26 @@ export default function Relatorios() {
 
             {aba === "geral" && (
               <div className="card" style={{ marginTop: 20 }}>
-                <div className="card-title">Entradas por Categoria</div>
+                <div className="card-title">Resumo do Caixa por Categoria</div>
 
-                {entradasPorCategoria.length > 0 ? (
+                {resumoPorCategoria.length > 0 ? (
                   <div className="table-wrapper">
                     <table>
                       <thead>
                         <tr>
                           <th>Categoria</th>
-                          <th>Total de Entradas</th>
+                          <th>Entradas</th>
+                          <th>Saidas</th>
+                          <th>Saldo</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {entradasPorCategoria.map((item) => (
+                        {resumoPorCategoria.map((item) => (
                           <tr key={item.categoria}>
                             <td>{item.categoria}</td>
-                            <td className="money positive">{moeda.format(item.total)}</td>
+                            <td className="money positive">{item.entradas ? moeda.format(item.entradas) : "-"}</td>
+                            <td className="money negative">{item.saidas ? moeda.format(item.saidas) : "-"}</td>
+                            <td className={`money ${item.saldo >= 0 ? "positive" : "negative"}`}>{moeda.format(item.saldo)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -556,7 +645,7 @@ export default function Relatorios() {
                   </div>
                 ) : (
                   <div className="empty-state">
-                    <p>Nenhuma entrada de caixa encontrada para os filtros selecionados.</p>
+                    <p>Nenhum movimento de caixa encontrado para os filtros selecionados.</p>
                   </div>
                 )}
               </div>
@@ -571,6 +660,7 @@ export default function Relatorios() {
                     <th>Descrição</th>
                     <th>Congregação</th>
                     <th>Forma</th>
+                    <th>Tipo</th>
                     <th>Entrada</th>
                     <th>PIX</th>
                     <th>Dinheiro</th>
@@ -587,9 +677,10 @@ export default function Relatorios() {
                       <td>{linha.descricao}</td>
                       <td>{linha.congregacao || "-"}</td>
                       <td>{linha.forma || "-"}</td>
+                      <td>{linha.tipo}</td>
                       <td className="money positive">{linha.entrada ? moeda.format(linha.entrada) : "-"}</td>
-                      <td className="money positive">{linha.entradaPix ? moeda.format(linha.entradaPix) : "-"}</td>
-                      <td className="money positive">{linha.entradaDinheiro ? moeda.format(linha.entradaDinheiro) : "-"}</td>
+                      <td className="money positive">{linha.pix ? moeda.format(linha.pix) : "-"}</td>
+                      <td className="money positive">{linha.dinheiro ? moeda.format(linha.dinheiro) : "-"}</td>
                       <td className="money negative">{linha.saida ? moeda.format(linha.saida) : "-"}</td>
                       <td className="money negative">{linha.pendente ? moeda.format(linha.pendente) : "-"}</td>
                       <td>{linha.status || "-"}</td>
