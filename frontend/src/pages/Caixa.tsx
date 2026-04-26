@@ -26,6 +26,14 @@ function formatarData(data: string) {
   return dia && mes && ano ? `${dia}/${mes}/${ano}` : data;
 }
 
+function normalizarTexto(valor?: string | number | null) {
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function mensagemErroApi(error: unknown, acao: string) {
   if (!axios.isAxiosError(error)) {
     return `Erro ao ${acao}`;
@@ -152,15 +160,21 @@ export default function Caixa() {
   }
 
   const movimentosFiltrados = useMemo(() => {
-    const termoBusca = busca.trim().toLowerCase();
+    const termoBusca = normalizarTexto(busca);
 
     return movimentos
       .filter((item) => {
-        const combinaBusca = !termoBusca
-          || item.descricao?.toLowerCase().includes(termoBusca)
-          || item.categoria?.toLowerCase().includes(termoBusca)
-          || item.formaPagamento?.toLowerCase().includes(termoBusca)
-          || item.observacao?.toLowerCase().includes(termoBusca);
+        const camposBusca = [
+          item.descricao,
+          item.categoria,
+          item.formaPagamento,
+          item.observacao,
+          item.justificativa,
+          item.tipo === "ENTRADA" ? "entrada" : "saida",
+          formatarData(item.data),
+          moeda.format(item.valor)
+        ];
+        const combinaBusca = !termoBusca || camposBusca.some((campo) => normalizarTexto(campo).includes(termoBusca));
         const combinaTipo = !tipoFiltro || item.tipo === tipoFiltro;
 
         return combinaBusca && combinaTipo;
@@ -181,164 +195,172 @@ export default function Caixa() {
 
   return (
     <Layout>
-      <div className="page-header">
-        <h2>Controle de Caixa</h2>
-        <p>Registre entradas e saidas financeiras</p>
-      </div>
-
-      <div className="grid-3" style={{ marginBottom: 24 }}>
-        <div className="stat-card green">
-          <div className="stat-label">Saldo Atual</div>
-          <div className="stat-value">{moeda.format(resumo.saldo)}</div>
+      <div className="caixa-page">
+        <div className="page-header">
+          <h2>Controle de Caixa</h2>
+          <p>Registre entradas e saidas financeiras</p>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Entradas</div>
-          <div className="stat-value small">{moeda.format(resumo.entradas)}</div>
+
+        <div className="grid-3" style={{ marginBottom: 24 }}>
+          <div className="stat-card green">
+            <div className="stat-label">Saldo Atual</div>
+            <div className="stat-value">{moeda.format(resumo.saldo)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Total Entradas</div>
+            <div className="stat-value small">{moeda.format(resumo.entradas)}</div>
+          </div>
+          <div className="stat-card red">
+            <div className="stat-label">Total Saidas</div>
+            <div className="stat-value small">{moeda.format(resumo.saidas)}</div>
+          </div>
         </div>
-        <div className="stat-card red">
-          <div className="stat-label">Total Saidas</div>
-          <div className="stat-value small">{moeda.format(resumo.saidas)}</div>
+
+        <div className="page-actions">
+          <div className="filters-bar caixa-filters">
+            <input
+              className="form-control search-control"
+              type="text"
+              placeholder="Buscar por descricao, categoria, forma ou valor..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+            <select className="form-control filter-control" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}>
+              <option value="">Todos os tipos</option>
+              <option value="ENTRADA">Entradas</option>
+              <option value="SAIDA">Saidas</option>
+            </select>
+          </div>
+          <Link className="btn btn-primary" to="/novo-movimento">
+            <i className="bi bi-plus-lg" aria-hidden="true"></i> Nova Movimentacao
+          </Link>
         </div>
-      </div>
 
-      <div className="page-actions">
-        <div className="filters-bar">
-          <input className="form-control" type="text" placeholder="Buscar..." value={busca} onChange={(e) => setBusca(e.target.value)} />
-          <select className="form-control" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}>
-            <option value="">Todos os tipos</option>
-            <option value="ENTRADA">Entradas</option>
-            <option value="SAIDA">Saídas</option>
-          </select>
-        </div>
-        <Link className="btn btn-primary" to="/novo-movimento">
-          <i className="bi bi-plus-lg" aria-hidden="true"></i> Nova Movimentacao
-        </Link>
-      </div>
-
-      {editando && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div className="card-title">Editar Movimento</div>
-          <form onSubmit={salvarEdicao}>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Tipo *</label>
-                <select className="form-control" name="tipo" value={form.tipo} onChange={handleChange}>
-                  <option value="ENTRADA">Entrada</option>
-                  <option value="SAIDA">Saida</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Data *</label>
-                <input className="form-control" name="data" type="date" value={form.data} onChange={handleChange} />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Descricao *</label>
-                <input className="form-control" name="descricao" value={form.descricao} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label>Categoria *</label>
-                <input className="form-control" name="categoria" value={form.categoria} onChange={handleChange} />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Forma *</label>
-                <select className="form-control" name="formaPagamento" value={form.formaPagamento} onChange={handleChange}>
-                  <option value="PIX">PIX</option>
-                  <option value="DINHEIRO">Dinheiro</option>
-                  <option value="MISTO">Misto</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Valor *</label>
-                <input className="form-control" name="valor" type="number" min="0" step="0.01" value={form.valor} onChange={handleChange} />
-              </div>
-            </div>
-
-            {form.formaPagamento === "MISTO" && (
+        {editando && (
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="card-title">Editar Movimento</div>
+            <form onSubmit={salvarEdicao}>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Valor em PIX *</label>
-                  <input className="form-control" name="valorPix" type="number" min="0" step="0.01" value={form.valorPix} onChange={handleChange} />
+                  <label>Tipo *</label>
+                  <select className="form-control" name="tipo" value={form.tipo} onChange={handleChange}>
+                    <option value="ENTRADA">Entrada</option>
+                    <option value="SAIDA">Saida</option>
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label>Valor em Dinheiro *</label>
-                  <input className="form-control" name="valorDinheiro" type="number" min="0" step="0.01" value={form.valorDinheiro} onChange={handleChange} />
+                  <label>Data *</label>
+                  <input className="form-control" name="data" type="date" value={form.data} onChange={handleChange} />
                 </div>
               </div>
-            )}
 
-            {form.tipo === "SAIDA" && (
-              <div className="form-group">
-                <label>Justificativa da Saida *</label>
-                <input className="form-control" name="justificativa" value={form.justificativa} onChange={handleChange} />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Descricao *</label>
+                  <input className="form-control" name="descricao" value={form.descricao} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label>Categoria *</label>
+                  <input className="form-control" name="categoria" value={form.categoria} onChange={handleChange} />
+                </div>
               </div>
-            )}
 
-            <div className="form-group">
-              <label>Observacao</label>
-              <input className="form-control" name="observacao" value={form.observacao} onChange={handleChange} />
-            </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Forma *</label>
+                  <select className="form-control" name="formaPagamento" value={form.formaPagamento} onChange={handleChange}>
+                    <option value="PIX">PIX</option>
+                    <option value="DINHEIRO">Dinheiro</option>
+                    <option value="MISTO">Misto</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Valor *</label>
+                  <input className="form-control" name="valor" type="number" min="0" step="0.01" value={form.valor} onChange={handleChange} />
+                </div>
+              </div>
 
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-              <button className="btn btn-outline" type="button" onClick={cancelarEdicao}>Cancelar</button>
-              <button className="btn btn-primary" type="submit">Salvar Alteracoes</button>
-            </div>
-          </form>
-        </div>
-      )}
+              {form.formaPagamento === "MISTO" && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Valor em PIX *</label>
+                    <input className="form-control" name="valorPix" type="number" min="0" step="0.01" value={form.valorPix} onChange={handleChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Valor em Dinheiro *</label>
+                    <input className="form-control" name="valorDinheiro" type="number" min="0" step="0.01" value={form.valorDinheiro} onChange={handleChange} />
+                  </div>
+                </div>
+              )}
 
-      <div className="card">
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Tipo</th>
-                <th>Descricao</th>
-                <th>Categoria</th>
-                <th>Forma</th>
-                <th>Valor</th>
-                <th>Acoes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movimentosFiltrados.map((item) => (
-                <tr key={item.id}>
-                  <td>{formatarData(item.data)}</td>
-                  <td>
-                    <span className={`badge ${item.tipo === "ENTRADA" ? "badge-entrada" : "badge-saida"}`}>
-                      {item.tipo === "ENTRADA" ? "Entrada" : "Saida"}
-                    </span>
-                  </td>
-                  <td>{item.descricao}</td>
-                  <td>{item.categoria}</td>
-                  <td><span className="badge badge-pix">{item.formaPagamento}</span></td>
-                  <td className={`money ${item.tipo === "ENTRADA" ? "positive" : "negative"}`}>
-                    {moeda.format(item.valor)}
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button className="btn btn-outline btn-sm" type="button" onClick={() => abrirEdicao(item)}>Editar</button>
-                      <button className="btn btn-danger btn-sm" type="button" onClick={() => excluirMovimento(item)}>Excluir</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              {form.tipo === "SAIDA" && (
+                <div className="form-group">
+                  <label>Justificativa da Saida *</label>
+                  <input className="form-control" name="justificativa" value={form.justificativa} onChange={handleChange} />
+                </div>
+              )}
 
-        {movimentosFiltrados.length === 0 && (
-          <div className="empty-state">
-            <div className="icon"><i className="bi bi-cash-coin" aria-hidden="true"></i></div>
-            <p>{movimentos.length === 0 ? "Nenhuma movimentacao encontrada." : "Nenhuma movimentacao encontrada para os filtros selecionados."}</p>
+              <div className="form-group">
+                <label>Observacao</label>
+                <input className="form-control" name="observacao" value={form.observacao} onChange={handleChange} />
+              </div>
+
+              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                <button className="btn btn-outline" type="button" onClick={cancelarEdicao}>Cancelar</button>
+                <button className="btn btn-primary" type="submit">Salvar Alteracoes</button>
+              </div>
+            </form>
           </div>
         )}
+
+        <div className="card">
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Descricao</th>
+                  <th>Categoria</th>
+                  <th>Forma</th>
+                  <th>Valor</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movimentosFiltrados.map((item) => (
+                  <tr key={item.id}>
+                    <td>{formatarData(item.data)}</td>
+                    <td>
+                      <span className={`badge ${item.tipo === "ENTRADA" ? "badge-entrada" : "badge-saida"}`}>
+                        {item.tipo === "ENTRADA" ? "Entrada" : "Saida"}
+                      </span>
+                    </td>
+                    <td>{item.descricao}</td>
+                    <td>{item.categoria}</td>
+                    <td><span className="badge badge-pix">{item.formaPagamento}</span></td>
+                    <td className={`money ${item.tipo === "ENTRADA" ? "positive" : "negative"}`}>
+                      {moeda.format(item.valor)}
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn btn-outline btn-sm" type="button" onClick={() => abrirEdicao(item)}>Editar</button>
+                        <button className="btn btn-danger btn-sm" type="button" onClick={() => excluirMovimento(item)}>Excluir</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {movimentosFiltrados.length === 0 && (
+            <div className="empty-state">
+              <div className="icon"><i className="bi bi-cash-coin" aria-hidden="true"></i></div>
+              <p>{movimentos.length === 0 ? "Nenhuma movimentacao encontrada." : "Nenhuma movimentacao encontrada para os filtros selecionados."}</p>
+            </div>
+          )}
+        </div>
       </div>
     </Layout>
   );

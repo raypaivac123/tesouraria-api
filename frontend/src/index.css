@@ -863,6 +863,44 @@ tbody td {
   border-radius: 12px;
 }
 
+.caixa-page .page-actions {
+  align-items: center;
+}
+
+.caixa-page .caixa-filters {
+  display: grid;
+  gap: 12px;
+}
+
+.caixa-page .search-control,
+.caixa-page .filter-control {
+  width: 330px;
+  max-width: 100%;
+  min-width: 0;
+  height: 56px;
+  border-radius: 12px;
+  font-size: 18px;
+}
+
+.caixa-page .search-control {
+  padding-left: 18px;
+}
+
+@media (max-width: 900px) {
+  .caixa-page .page-actions {
+    align-items: stretch;
+  }
+
+  .caixa-page .caixa-filters {
+    width: 100%;
+  }
+
+  .caixa-page .search-control,
+  .caixa-page .filter-control {
+    width: 100%;
+  }
+}
+
 .congregacoes-empty {
   padding-top: 12px;
 }
