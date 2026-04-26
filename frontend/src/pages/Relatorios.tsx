@@ -111,6 +111,29 @@ function origemCaixaPorCategoria(categoria?: string) {
   return "Caixa";
 }
 
+function modoResumoFinanceiro(aba: AbaRelatorio, formaPagamento: FormaPagamentoFiltro) {
+  if (formaPagamento) return formaPagamento;
+  if (aba === "pix") return "PIX";
+  if (aba === "dinheiro") return "DINHEIRO";
+  return "";
+}
+
+function valorEntradaPorModo(linha: LinhaRelatorio, modo: FormaPagamentoFiltro) {
+  if (!linha.entrada) return 0;
+  if (modo === "PIX") return linha.pix;
+  if (modo === "DINHEIRO") return linha.dinheiro;
+  if (modo === "MISTO") return linha.forma === "MISTO" ? linha.pix + linha.dinheiro : 0;
+  return linha.entrada;
+}
+
+function valorSaidaPorModo(linha: LinhaRelatorio, modo: FormaPagamentoFiltro) {
+  if (!linha.saida) return 0;
+  if (modo === "PIX") return linha.pix;
+  if (modo === "DINHEIRO") return linha.dinheiro;
+  if (modo === "MISTO") return linha.forma === "MISTO" ? linha.pix + linha.dinheiro : 0;
+  return linha.saida;
+}
+
 export default function Relatorios() {
   const [aba, setAba] = useState<AbaRelatorio>("geral");
   const [dataInicial, setDataInicial] = useState("");
@@ -234,20 +257,24 @@ export default function Relatorios() {
       });
   }, [busca, categoriaFiltro, dataFinal, dataInicial, formaPagamento, linhasBase, origemFiltro, tipoMovimento]);
 
+  const modoResumo = useMemo(() => modoResumoFinanceiro(aba, formaPagamento), [aba, formaPagamento]);
+
   const resumo = useMemo(() => ({
-    entradas: linhas.reduce((total, linha) => total + linha.entrada, 0),
+    entradas: linhas.reduce((total, linha) => total + valorEntradaPorModo(linha, modoResumo), 0),
     pix: linhas.reduce((total, linha) => total + linha.pix, 0),
     dinheiro: linhas.reduce((total, linha) => total + linha.dinheiro, 0),
-    filtrado: formaPagamento === "PIX"
+    filtrado: modoResumo === "PIX"
       ? linhas.reduce((total, linha) => total + linha.pix, 0)
-      : formaPagamento === "DINHEIRO"
+      : modoResumo === "DINHEIRO"
         ? linhas.reduce((total, linha) => total + linha.dinheiro, 0)
-        : linhas.reduce((total, linha) => total + linha.pix + linha.dinheiro, 0),
-    saidas: linhas.reduce((total, linha) => total + linha.saida, 0),
+        : modoResumo === "MISTO"
+          ? linhas.reduce((total, linha) => total + (linha.forma === "MISTO" ? linha.pix + linha.dinheiro : 0), 0)
+          : linhas.reduce((total, linha) => total + linha.entrada + linha.saida, 0),
+    saidas: linhas.reduce((total, linha) => total + valorSaidaPorModo(linha, modoResumo), 0),
     pendente: linhas.reduce((total, linha) => total + Number(linha.pendente || 0), 0),
-    movimentado: linhas.reduce((total, linha) => total + linha.entrada + linha.saida, 0),
-    saldo: linhas.reduce((total, linha) => total + linha.entrada - linha.saida, 0)
-  }), [formaPagamento, linhas]);
+    movimentado: linhas.reduce((total, linha) => total + valorEntradaPorModo(linha, modoResumo) + valorSaidaPorModo(linha, modoResumo), 0),
+    saldo: linhas.reduce((total, linha) => total + valorEntradaPorModo(linha, modoResumo) - valorSaidaPorModo(linha, modoResumo), 0)
+  }), [linhas, modoResumo]);
 
   const resumoPorCategoria = useMemo(() => {
     const categorias = new Map<string, { entradas: number; saidas: number }>();
@@ -271,10 +298,12 @@ export default function Relatorios() {
       .filter((item) => combinaFormaPagamento(item, formaPagamento))
       .filter((item) => !tipoMovimento || item.tipo === tipoMovimento)
       .forEach((item) => {
-        const valor = formaPagamento === "PIX"
+        const valor = modoResumo === "PIX"
           ? item.pix
-          : formaPagamento === "DINHEIRO"
+          : modoResumo === "DINHEIRO"
             ? item.dinheiro
+            : modoResumo === "MISTO"
+              ? item.forma === "MISTO" ? item.pix + item.dinheiro : 0
             : item.entrada;
         const atual = categorias.get(item.categoria) || { entradas: 0, saidas: 0 };
 
@@ -295,7 +324,7 @@ export default function Relatorios() {
         saldo: total.entradas - total.saidas
       }))
       .sort((a, b) => b.saldo - a.saldo);
-  }, [caixa, dataFinal, dataInicial, formaPagamento, tipoMovimento]);
+  }, [caixa, dataFinal, dataInicial, formaPagamento, modoResumo, tipoMovimento]);
 
   function limparFiltros() {
     setDataInicial("");
@@ -556,10 +585,10 @@ export default function Relatorios() {
                       <td>{linha.categoria || "-"}</td>
                       <td>{linha.forma || "-"}</td>
                       <td>{linha.tipo}</td>
-                      <td className="money positive">{linha.entrada ? moeda.format(linha.entrada) : "-"}</td>
+                      <td className="money positive">{valorEntradaPorModo(linha, modoResumo) ? moeda.format(valorEntradaPorModo(linha, modoResumo)) : "-"}</td>
                       <td className="money positive">{linha.pix ? moeda.format(linha.pix) : "-"}</td>
                       <td className="money positive">{linha.dinheiro ? moeda.format(linha.dinheiro) : "-"}</td>
-                      <td className="money negative">{linha.saida ? moeda.format(linha.saida) : "-"}</td>
+                      <td className="money negative">{valorSaidaPorModo(linha, modoResumo) ? moeda.format(valorSaidaPorModo(linha, modoResumo)) : "-"}</td>
                       <td className="money negative">{linha.pendente ? moeda.format(linha.pendente) : "-"}</td>
                       <td>{linha.status || "-"}</td>
                     </tr>
