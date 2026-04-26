@@ -1,7 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import Layout from "../components/Layout";
 import api from "../api/api";
+
+function mensagemErroApi(error: unknown, acao: string) {
+  if (!axios.isAxiosError(error)) {
+    return `Erro ao ${acao}`;
+  }
+
+  const status = error.response?.status;
+  const erro = error.response?.data?.erro || error.response?.data?.message;
+
+  if (erro) {
+    return `Erro ao ${acao}: ${erro}`;
+  }
+
+  return `Erro ao ${acao}${status ? ` (${status})` : ""}`;
+}
 
 export default function NovoMovimento() {
   const navigate = useNavigate();
@@ -12,7 +28,11 @@ export default function NovoMovimento() {
     descricao: "",
     categoria: "",
     formaPagamento: "PIX",
-    valor: 0
+    valor: "",
+    valorPix: "",
+    valorDinheiro: "",
+    observacao: "",
+    justificativa: ""
   });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -24,12 +44,21 @@ export default function NovoMovimento() {
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
-    await api.post("/caixa", {
-      ...form,
-      valor: Number(form.valor)
-    });
-    alert("Salvo com sucesso");
-    navigate("/caixa");
+
+    try {
+      await api.post("/caixa", {
+        ...form,
+        valor: Number(form.valor),
+        valorPix: form.formaPagamento === "MISTO" ? Number(form.valorPix || 0) : undefined,
+        valorDinheiro: form.formaPagamento === "MISTO" ? Number(form.valorDinheiro || 0) : undefined,
+        justificativa: form.tipo === "SAIDA" ? form.justificativa : undefined
+      });
+
+      alert("Movimento salvo com sucesso");
+      navigate("/caixa");
+    } catch (error) {
+      alert(mensagemErroApi(error, "salvar movimento"));
+    }
   }
 
   return (
@@ -39,7 +68,7 @@ export default function NovoMovimento() {
         <p>Registre uma entrada ou saida financeira</p>
       </div>
 
-      <div className="card" style={{ maxWidth: 620 }}>
+      <div className="card" style={{ maxWidth: 720 }}>
         <form onSubmit={salvar}>
           <div className="form-row">
             <div className="form-group">
@@ -70,7 +99,7 @@ export default function NovoMovimento() {
               <select className="form-control" name="formaPagamento" value={form.formaPagamento} onChange={handleChange}>
                 <option value="PIX">PIX</option>
                 <option value="DINHEIRO">Dinheiro</option>
-                <option value="CARTAO">Cartao</option>
+                <option value="MISTO">Misto</option>
               </select>
             </div>
           </div>
@@ -78,6 +107,31 @@ export default function NovoMovimento() {
           <div className="form-group">
             <label>Valor (R$) *</label>
             <input className="form-control" name="valor" type="number" min="0" step="0.01" placeholder="0,00" value={form.valor} onChange={handleChange} />
+          </div>
+
+          {form.formaPagamento === "MISTO" && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>Valor em PIX *</label>
+                <input className="form-control" name="valorPix" type="number" min="0" step="0.01" value={form.valorPix} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label>Valor em Dinheiro *</label>
+                <input className="form-control" name="valorDinheiro" type="number" min="0" step="0.01" value={form.valorDinheiro} onChange={handleChange} />
+              </div>
+            </div>
+          )}
+
+          {form.tipo === "SAIDA" && (
+            <div className="form-group">
+              <label>Justificativa da Saida *</label>
+              <input className="form-control" name="justificativa" placeholder="Informe o motivo da saida" value={form.justificativa} onChange={handleChange} />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Observacao</label>
+            <input className="form-control" name="observacao" placeholder="Opcional" value={form.observacao} onChange={handleChange} />
           </div>
 
           <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
