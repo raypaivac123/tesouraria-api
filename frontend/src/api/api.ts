@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const fallbackBaseURL = import.meta.env.DEV
+  ? "http://localhost:8080"
+  : "https://tesouraria-h4zl.onrender.com";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "https://tesouraria-h4zl.onrender.com"
+  baseURL: import.meta.env.VITE_API_URL ?? fallbackBaseURL,
 });
 
 api.interceptors.request.use((config) => {

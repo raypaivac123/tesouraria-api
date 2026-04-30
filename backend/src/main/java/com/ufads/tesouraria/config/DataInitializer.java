@@ -19,17 +19,18 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initAdmin() {
         return args -> {
-            if (usuarioRepository.findByUsername("rayssa").isEmpty()) {
-                Usuario admin = Usuario.builder()
-                        .nome("Rayssa")
-                        .username("rayssa")
-                        .password(passwordEncoder.encode("123456"))
-                        .role(RoleUsuario.ADMIN)
-                        .ativo(true)
-                        .build();
+            Usuario admin = usuarioRepository.findByUsername("rayssa")
+                    .orElseGet(() -> Usuario.builder()
+                            .username("rayssa")
+                            .build());
 
-                usuarioRepository.save(admin);
-            }
+            admin.setNome("Rayssa");
+            admin.setUsername("rayssa");
+            admin.setPassword(passwordEncoder.encode("123456"));
+            admin.setRole(RoleUsuario.ADMIN);
+            admin.setAtivo(true);
+
+            usuarioRepository.save(admin);
         };
     }
 }

@@ -17,7 +17,9 @@ public class CorsConfig {
 
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
+                "http://localhost:*",
                 "http://127.0.0.1:5173",
+                "http://127.0.0.1:*",
                 "https://tesouraria-api.vercel.app",
                 "https://*.vercel.app"
         ));

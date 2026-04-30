@@ -13,7 +13,10 @@ export default function Login() {
     setErro("");
 
     try {
-      const response = await api.post("/auth/login", { username, password });
+      const response = await api.post("/auth/login", {
+        username: username.trim(),
+        password,
+      });
       localStorage.setItem("token", response.data.token);
       navigate("/dashboard");
     } catch {
