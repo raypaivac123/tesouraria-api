@@ -40,6 +40,7 @@ export default function NovoUniformeFestividade() {
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
   const [mulheres, setMulheres] = useState<Mulher[]>([]);
   const [mulherSelecionadaId, setMulherSelecionadaId] = useState("");
+  const [salvando, setSalvando] = useState(false);
   const [form, setForm] = useState({
     nomeMulher: "",
     telefone: "",
@@ -94,6 +95,7 @@ export default function NovoUniformeFestividade() {
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
+    if (salvando) return;
 
     const valorPix = Number(form.valorPix || 0);
     const valorDinheiro = Number(form.valorDinheiro || 0);
@@ -104,6 +106,7 @@ export default function NovoUniformeFestividade() {
     }
 
     try {
+      setSalvando(true);
       await api.post("/uniforme-festividade", {
         ...form,
         congregacaoId: Number(form.congregacaoId),
@@ -120,6 +123,8 @@ export default function NovoUniformeFestividade() {
     } catch (error) {
       console.error("Erro ao salvar uniforme festividade", error);
       alert(mensagemErroApi(error, "salvar uniforme festividade"));
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -205,8 +210,8 @@ export default function NovoUniformeFestividade() {
           </div>
 
           <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
-            <button className="btn btn-outline" type="button" onClick={() => navigate("/uniforme-festividade")}>Cancelar</button>
-            <button className="btn btn-primary" type="submit">Salvar</button>
+            <button className="btn btn-outline" type="button" onClick={() => navigate("/uniforme-festividade")} disabled={salvando}>Cancelar</button>
+            <button className="btn btn-primary" type="submit" disabled={salvando}>{salvando ? "Salvando..." : "Salvar"}</button>
           </div>
         </form>
       </div>

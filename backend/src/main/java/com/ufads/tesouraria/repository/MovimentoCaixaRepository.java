@@ -15,4 +15,11 @@ public interface MovimentoCaixaRepository extends JpaRepository<MovimentoCaixa, 
 
     List<MovimentoCaixa> findByDataBetweenAndAtivoTrue(LocalDate dataInicial, LocalDate dataFinal);
 
+    List<MovimentoCaixa> findByDataAndTipoAndDescricaoAndCategoriaAndAtivoTrue(
+            LocalDate data,
+            TipoMovimento tipo,
+            String descricao,
+            String categoria
+    );
+
 }
