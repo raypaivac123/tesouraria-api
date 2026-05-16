@@ -1,252 +1,298 @@
 # Tesouraria API
 
-**REST API** built with **Java 17 + Spring Boot** for managing financial operations of church events and activities.
-
-The system allows tracking uniform sales, partial payments, pending balances, and centralizes financial information that was previously scattered in notes, papers, or spreadsheets. It ensures a **reliable payment history**, reduces calculation errors, and provides consolidated data to support treasury decision-making.
+> **Church Treasury Management System** — A production-ready REST API built with Java 17 and Spring Boot for structured financial control of church events and activities.
 
 ---
 
-## Problem
+## Overview
 
-During church event organization, it was identified that:
+**Tesouraria API** is a backend solution developed to replace manual, error-prone financial tracking with a reliable, auditable system. Originally designed for a church women's organization (UFADS), it manages uniform sales, partial payment tracking, installment control, and consolidated financial reporting — all in a clean, layered architecture.
 
-- Financial control was done manually  
-- It was difficult to track who had already paid  
-- No consolidated view of collected amounts  
-- Partial payments were not properly managed  
-- Information was scattered across notes and spreadsheets  
-- Maintaining a reliable history was challenging  
+> *Designed for real-world use. Built for maintainability and scale.*
 
-This scenario caused rework, calculation errors, and poor financial organization.
+---
+
+## Problem Statement
+
+Before this system was introduced, financial management was handled entirely by hand:
+
+- No consolidated view of collected amounts
+- No reliable tracking of who had paid
+- Partial payments were not properly recorded
+- Information was scattered across handwritten notes and spreadsheets
+- No audit trail or payment history
+
+This led to **calculation errors, duplicated effort, and lack of financial transparency**.
 
 ---
 
 ## Solution
 
-A REST API with Spring Boot was developed to:
+A REST API was developed with Spring Boot to address each of these pain points:
 
-- Register uniform sales  
-- Track partial payments (Pix, cash)  
-- Control installments and current installment  
-- Automatically calculate pending balance  
-- Organize information by congregation  
-- Provide data for financial dashboards  
-- Export reports in CSV, PDF, and Excel  
-- Maintain history of changes and automatic cash updates  
-- Prepare secure authentication with JWT  
-- Keep an organized, scalable, and maintainable architecture  
+- Register uniform sales with full payment detail
+- Track partial payments via Pix and cash
+- Control installment plans and current installment status
+- Automatically calculate outstanding balances
+- Organize data by congregation
+- Provide structured data for a financial dashboard
+- Export reports in **CSV, PDF, and Excel**
+- Maintain a detailed change history and automatic cash reconciliation
+- Secure access via **JWT authentication**
 
 ---
 
 ## Architecture
 
-The project follows a **layered architecture**:
+The project follows a **clean layered architecture**, ensuring clear separation of concerns and ease of maintenance:
 
 | Layer | Responsibility |
-| --- | --- |
-| `controller` | Handles HTTP requests and exposes API endpoints |
-| `service` | Business logic |
-| `repository` | Database access |
-| `entity` | Database table representation |
-| `dto` | API input/output objects |
-| `mapper` | Converts data between entities and DTOs |
-| `security` | Handles authentication, authorization, JWT |
-| `event` | Automates cash updates from payments |
-| `config` | General project configuration |
+|---|---|
+| `controller` | Receives HTTP requests and exposes API endpoints |
+| `service` | Encapsulates all business logic |
+| `repository` | Handles database access via Spring Data JPA |
+| `entity` | Represents database tables |
+| `dto` | Defines structured input/output objects |
+| `mapper` | Converts between entities and DTOs |
+| `security` | Manages authentication, authorization, and JWT |
+| `event` | Automates cash reconciliation from payment events |
+| `config` | Stores global project configuration |
 
-**Backend folder structure**:
+### Project Structure
 
-```text
+```
 backend/src/main/java/com/ufads/tesouraria
-|-- config
-|-- controller
-|-- dto
-|-- entity
-|-- enums
-|-- event
-|-- exception
-|-- mapper
-|-- repository
-|-- security
-`-- service
+├── config
+├── controller
+├── dto
+├── entity
+├── enums
+├── event
+├── exception
+├── mapper
+├── repository
+├── security
+└── service
+```
 
+---
 
-Technologies
-Backend
-Java 17
-Spring Boot 3
-Spring Web
-Spring Data JPA
-Spring Security
-JWT
-Hibernate
-Bean Validation
-Maven
-Lombok
-Swagger / OpenAPI
-PostgreSQL
-Frontend
-React
-TypeScript
-Vite
-Axios
-React Router
-Infrastructure & Tools
-Docker
-Git / GitHub
-Render
-Implemented Features
- Congregation registration
- Participant registration
- Uniform sales registration
- Partial payment handling
- Installment control
- Automatic pending balance calculation
- Payment status tracking
- Automatic cash updates
- Detailed history of changes
- Export reports: CSV / PDF / Excel
- Structured JSON logs
- DTO organization
- Mapper conversions
- Layered architecture
- Swagger / OpenAPI
- JWT login
- Password encryption (BCrypt)
- Route protection with Spring Security
- Global exception handling
- Dockerfile configured
- Frontend initial structure in React
- Deploy initiated on Render
-Data Controlled
+## Tech Stack
 
-The API manages:
+### Backend
+| Technology | Purpose |
+|---|---|
+| Java 17 | Core language |
+| Spring Boot 3 | Application framework |
+| Spring Web | REST API layer |
+| Spring Data JPA | Data persistence |
+| Spring Security | Authentication and route protection |
+| JWT | Stateless token-based authentication |
+| Hibernate | ORM / database mapping |
+| Bean Validation | Input validation |
+| Lombok | Boilerplate reduction |
+| Swagger / OpenAPI | API documentation |
+| PostgreSQL | Relational database |
+| Maven | Dependency and build management |
 
-Uniform total value
-Paid via Pix / cash
-Pending balance
-Payment status
-Installment count / current installment
-Payment date
-Observations
-Congregation linkage
-Cash movements
-History of changes
-Dashboard financial summary
-Main Endpoints
-Resource	Endpoint
-Authentication	/auth/register, /auth/login, /auth/refresh
-Congregations	/congregacoes
-Participants	/mulheres
-Sales	/vendas
-Sale Lots	/lotes-venda
-Festivity Uniforms	/uniforme-festividade
-Pandeiro Uniforms	/uniforme-pandeiro
-Cash Movements	/caixa
-Dashboard	/dashboard
-Reports	/relatorios/financeiro
-Export CSV	/relatorios/financeiro/csv
-Export PDF	/relatorios/financeiro/pdf
-Export Excel	/relatorios/financeiro/excel
-Change History	/historico
-Users	/usuarios
-Swagger	/swagger-ui.html
-Roadmap
-Security
- Authentication structure
- JWT login
- Password encryption
- Route protection
- Admin user registration
- Initial public registration via /auth/register
- Profile-based access control
- JWT token refresh
-Dashboard
- Dashboard data structure
- Overall financial summary
- Total by period
- Filter by congregation
- Detailed financial history
- Visual indicators of collection
-Payments
- Partial payment handling
- Automatic balance calculation
- Payment status tracking
- Installment control
- Detailed change history
- Automatic cash updates
-Reports
- Period-based report
- Congregation-based report
- CSV export
- PDF export
- Excel export
-Frontend
- Initial React structure
- Login screen
- API integration
- Full dashboard
- Full registration screen
- Sales & payments screen
- Reports screen
- Change history screen
-Quality
- Global exception handling
- Data validation
- Unit tests
- Application context tests
- Standardized error responses
- Structured logs
-Deploy
- Deployment-ready project
- Dockerfile
- Deployment initiated on Render
- Production database
- Environment variables finalized
- Final public API URL
-How to Run Locally
+### Frontend
+| Technology | Purpose |
+|---|---|
+| React + TypeScript | UI framework |
+| Vite | Build tool |
+| Axios | HTTP client |
+| React Router | Client-side navigation |
 
-Prerequisites: Java 17, Maven, PostgreSQL (or Neon), Git
+### Infrastructure
+| Tool | Purpose |
+|---|---|
+| Docker | Containerization |
+| Git + GitHub | Version control |
+| Render | Cloud deployment |
 
+---
+
+## Implemented Features
+
+### Security
+- [x] JWT-based login and authentication
+- [x] Password encryption with BCrypt
+- [x] Route protection via Spring Security
+- [x] Token refresh support
+- [x] Role-based access control structure
+
+### Payment Control
+- [x] Partial payment tracking (Pix + cash)
+- [x] Automatic outstanding balance calculation
+- [x] Payment status management
+- [x] Installment plan control
+- [x] Detailed change history
+- [x] Automatic cash reconciliation by payment type
+
+### Reporting
+- [x] Period-based and congregation-based reports
+- [x] CSV export
+- [x] PDF export
+- [x] Excel export
+- [x] Dashboard financial summary
+
+### Code Quality
+- [x] Global exception handling
+- [x] Input validation
+- [x] Structured JSON logging
+- [x] Standardized error responses
+- [x] DTO-based data organization
+- [x] Mapper pattern for entity conversion
+- [x] Unit tests
+- [x] Application context test
+
+### Infrastructure
+- [x] Dockerfile configured
+- [x] Deployment initiated on Render
+- [x] Production database configured
+
+---
+
+## API Endpoints
+
+| Resource | Endpoint |
+|---|---|
+| Authentication | `/auth/register`, `/auth/login`, `/auth/refresh` |
+| Congregations | `/congregacoes` |
+| Members | `/mulheres` |
+| Sales | `/vendas` |
+| Sale Batches | `/lotes-venda` |
+| Festival Uniforms | `/uniforme-festividade` |
+| Tambourine Uniforms | `/uniforme-pandeiro` |
+| Cash Movements | `/caixa` |
+| Dashboard | `/dashboard` |
+| Financial Report | `/relatorios/financeiro` |
+| CSV Export | `/relatorios/financeiro/csv` |
+| PDF Export | `/relatorios/financeiro/pdf` |
+| Excel Export | `/relatorios/financeiro/excel` |
+| Change History | `/historico` |
+| Users | `/usuarios` |
+| API Docs | `/swagger-ui.html` |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Java 17
+- Maven or Maven Wrapper
+- PostgreSQL or a configured [Neon](https://neon.tech) database
+- Git
+
+### Clone and Run
+
+```bash
 # Clone the repository
 git clone https://github.com/raypaivac123/tesouraria-api.git
+
+# Navigate to the backend folder
 cd tesouraria-api/backend
 
-# Configure database in src/main/resources/application.properties
+# Configure your database connection
+# Edit: src/main/resources/application.properties
 
-# Run the API
+# Run the application
 ./mvnw spring-boot:run
+
 # On Windows
 mvnw.cmd spring-boot:run
+```
 
-# Access Swagger
+Access the API documentation at:
+```
 http://localhost:8080/swagger-ui.html
+```
 
-Frontend:
+> **Default local user:** `rayssa` / `123456`
 
-cd tesouraria-api/frontend
-npm install
-npm run dev
-# Access at http://localhost:5173
-Environment Variables
-Variable	Description	Default
-PORT	Application port	8080
-DB_URL	PostgreSQL/Neon connection URL	required
-DB_USERNAME	Database user	required
-DB_PASSWORD	Database password	required
-JWT_SECRET	JWT secret key	default dev key
-JWT_EXPIRATION	Token expiration in ms	86400000
-Docker
-# Build image
+---
+
+## Environment Variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `PORT` | Application port | `8080` |
+| `DB_URL` | PostgreSQL/Neon connection URL | required |
+| `DB_USERNAME` | Database username | required |
+| `DB_PASSWORD` | Database password | required |
+| `JWT_SECRET` | Secret key for JWT token generation | dev default |
+| `JWT_EXPIRATION` | Token expiration in milliseconds | `86400000` |
+
+---
+
+## Docker
+
+```bash
+# Build the image
 docker build -t tesouraria-api .
 
-# Run container
+# Run the container
 docker run -p 8080:8080 tesouraria-api
+```
 
-Rayssa Paiva Carvalho – Software Developer & Tech Instructor at SENAC
+API available at `http://localhost:8080`
 
-GitHub: raypaivac123
-LinkedIn: Rayssa Paiva
-Notes
+---
 
-Project developed to solve real financial organization challenges of a church, applying best practices in backend, layered architecture, secure authentication, and prepared for frontend, dashboards, and reports.
+## Frontend
+
+```bash
+# Navigate to the frontend folder
+cd tesouraria-api/frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Frontend: `http://localhost:5173`  
+Backend must be running at: `http://localhost:8080`
+
+---
+
+## Roadmap
+
+| Area | Status |
+|---|---|
+| JWT authentication | ✅ Done |
+| Partial payment control | ✅ Done |
+| CSV / PDF / Excel export | ✅ Done |
+| Structured logging | ✅ Done |
+| Docker support | ✅ Done |
+| Render deployment | 🔄 In progress |
+| Full dashboard UI | 🔲 Planned |
+| Full frontend screens | 🔲 Planned |
+| Unit test coverage | 🔲 Planned |
+| Error response standardization | 🔲 Planned |
+
+---
+
+## Author
+
+**Rayssa Paiva Carvalho**  
+*B.Sc. Computer Science | Technology Instructor at SENAC*
+
+Focus areas: Java · Spring Boot · REST APIs · Databases · Web Development
+
+[![GitHub](https://img.shields.io/badge/GitHub-raypaivac123-181717?logo=github)](https://github.com/raypaivac123)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Rayssa%20Paiva-0A66C2?logo=linkedin)](https://www.linkedin.com/in/rayssa-paiva)
+
+---
+
+## Notes
+
+This project was developed to solve a real financial organization need within a church community, applying backend best practices including layered architecture, secure authentication, structured reporting, and full deployment preparation.
+
+It serves as a reference implementation for maintainable, production-oriented Spring Boot APIs.
+
+---
+
+*Built with Java · Spring Boot · PostgreSQL · Docker*
